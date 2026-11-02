@@ -19,7 +19,8 @@ Play2Perfect learns precise, contact-rich assembly in two stages:
 This repository provides:
 
 - **Training** code for both stages in Isaac Sim (Isaac Lab).
-- **Interactive (viser) evaluation** for four assembly tasks using our released checkpoints.
+- **Interactive (viser) evaluation** for four assembly tasks plus two everyday-object
+  insertions, using our released checkpoints.
 - A **minimal sim-to-real deployment** reference.
 
 > This release targets **Isaac Sim only**.
@@ -32,8 +33,8 @@ play2perfect/
 │   ├── train.py           # Single training entry point (both stages)
 │   ├── cfg/               # Hydra task + train configs
 │   └── tasks/{play,precise_assembly}/
-├── evaluation/         # The 4 assembly tasks: problem registry + viser evaluation
-│   ├── problems/          # peg-in-hole, fabrica beam parts 0 & 2, furniture-bench
+├── evaluation/         # Released tasks: problem registry + viser evaluation
+│   ├── problems/          # peg-in-hole, fabrica beam parts 0 & 2, furniture-bench, fork & plug
 │   └── eval_isaacsim.py   # Interactive viser evaluation
 ├── rl_games/              # Vendored RL library (PPO + SAPG)
 ├── deployment/            # Minimal sim-to-real reference
@@ -50,6 +51,16 @@ play2perfect/
 | Beam assembly — step 2 | `beam_assembly_step2` |
 | Screwing (furniture leg) | `screwing` |
 
+### Everyday-object insertions
+
+Two additional tasks with real-world-scale everyday objects, finetuned from the same
+Stage-1 play policy with the same environment and settings as the paper tasks:
+
+| Task | `problem` key |
+|------|----------------|
+| Fork into a flatware holder (YCB fork scan, handle first, 1 mm clearance) | `fork_insertion` |
+| USB-C wall plug into a power-strip socket (1.5 mm blades, 0.5 mm clearance) | `plug_insertion` |
+
 ## Installation
 
 See [docs/isaacsim_installation.md](docs/isaacsim_installation.md) for the full Isaac Sim /
@@ -60,7 +71,7 @@ Isaac Lab setup (Python 3.11, `.venv_isaacsim`).
 ### 1. Download checkpoints
 
 ```bash
-# Stage-1 play policy + the 4 finetuned assembly policies
+# Stage-1 play policy + the finetuned assembly policies
 python download_checkpoints.py
 ```
 
@@ -73,7 +84,7 @@ python evaluation/eval_isaacsim.py \
   --problem tight_insertion \
   --port 8044
 
-# ...or load all four downloaded policies and switch between them in the GUI
+# ...or load all downloaded policies and switch between them in the GUI
 python evaluation/eval_isaacsim.py --policies-dir pretrained_assembly --port 8044
 ```
 

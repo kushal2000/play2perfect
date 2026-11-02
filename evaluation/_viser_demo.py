@@ -49,17 +49,46 @@ TARGET_VOLUME_MAXS = [0.35, 0.2, 0.95]
 DEFAULT_INSERTION_SUCCESS_TOLERANCE = 0.01
 DEFAULT_RETRACT_SUCCESS_TOLERANCE = 0.005
 
+# Problems whose URDF visuals carry real materials (textured scan, multi-material
+# GLBs) and should be drawn with them. Every other problem keeps the flat-colour
+# collision-geometry rendering.
+MATERIAL_VIZ_PROBLEMS = frozenset({"fork_insertion", "plug_insertion"})
+
+
 def quat_xyzw_to_wxyz(q):
     return (q[3], q[0], q[1], q[2])
 
 
-def _load_mesh_for_viz(asset_path: Path) -> trimesh.Trimesh:
+def _load_mesh_for_viz(asset_path: Path, prefer_visual: bool = False) -> trimesh.Trimesh:
     """Load a mesh for viser visualization. Handles URDFs by composing
     each link's parent-joint origin with each collision/visual ``<origin>``,
     so multi-link fixture URDFs (joint-origin-driven layouts like our
     fabrica/fmb insertion_fixtures) render at the correct assembled pose."""
+    return trimesh.util.concatenate(_load_viz_parts(asset_path, prefer_visual))
+
+
+def _load_scene_for_viz(asset_path: Path) -> Optional[trimesh.Scene]:
+    """Visual geometry as a Scene with per-part materials intact.
+
+    ``trimesh.util.concatenate`` keeps only one material, so a multi-material
+    receptacle would collapse to grey; shipping the Scene as GLB keeps them.
+    """
+    try:
+        parts = _load_viz_parts(asset_path, prefer_visual=True)
+    except Exception:
+        return None
+    if not parts:
+        return None
+    scene = trimesh.Scene()
+    for i, m in enumerate(parts):
+        scene.add_geometry(m, geom_name=f"part_{i:02d}")
+    return scene
+
+
+def _load_viz_parts(asset_path: Path, prefer_visual: bool = False) -> list:
+    """Per-part meshes of an asset (URDF or mesh file), transforms applied."""
     if asset_path.suffix in (".obj", ".stl", ".ply"):
-        return trimesh.load(str(asset_path), force="mesh")
+        return [trimesh.load(str(asset_path), force="mesh")]
 
     import xml.etree.ElementTree as ET
     from scipy.spatial.transform import Rotation
@@ -117,22 +146,34 @@ def _load_mesh_for_viz(asset_path: Path) -> trimesh.Trimesh:
                 mesh_file = asset_path.parent / mesh_elem.get("filename")
                 if not mesh_file.exists():
                     continue
-                m = trimesh.load(str(mesh_file), force="mesh")
+                if not prefer_visual:
+                    m = trimesh.load(str(mesh_file), force="mesh")
+                else:
+                    # Keep a Scene's sub-geometries separate: merging them
+                    # drops all but one material.
+                    loaded = trimesh.load(str(mesh_file))
+                    sub = ([g for g in loaded.geometry.values()
+                            if isinstance(g, trimesh.Trimesh)]
+                           if isinstance(loaded, trimesh.Scene) else [loaded])
+                    for g in sub:
+                        g = g.copy()
+                        g.apply_transform(link_T @ local_T)
+                        out.append(g)
+                    continue
             else:
                 continue
             m.apply_transform(link_T @ local_T)
             out.append(m)
         return out
 
+    order = ("visual", "collision") if prefer_visual else ("collision", "visual")
     meshes = []
-    for link in root.findall("link"):
-        meshes.extend(_collect_geom(link, "collision"))
-    if not meshes:
+    for tag in order:
         for link in root.findall("link"):
-            meshes.extend(_collect_geom(link, "visual"))
-    if not meshes:
-        return trimesh.creation.box(extents=(0.08, 0.08, 0.01))
-    return trimesh.util.concatenate(meshes)
+            meshes.extend(_collect_geom(link, tag))
+        if meshes:
+            return meshes
+    return [trimesh.creation.box(extents=(0.08, 0.08, 0.01))]
 
 
 def _asset_abs(path_like: str) -> Path:
@@ -244,8 +285,7 @@ class PegDynamicDemo:
         self._obj_keypoints = []
         self._goal_keypoints = []
 
-        self._hole_mesh = _load_mesh_for_viz(self._hole_urdf_abs)
-        self._object_mesh = _load_mesh_for_viz(self._object_urdf_abs)
+        self._reload_problem_meshes()
         self._target_vol_box = None
 
         self._build_gui()
@@ -263,8 +303,24 @@ class PegDynamicDemo:
         self._set_asset_paths(object_urdf, hole_urdf)
 
     def _reload_problem_meshes(self) -> None:
-        self._hole_mesh = _load_mesh_for_viz(self._hole_urdf_abs)
-        self._object_mesh = _load_mesh_for_viz(self._object_urdf_abs)
+        self._material_viz = self.problem_name in MATERIAL_VIZ_PROBLEMS
+        self._hole_mesh = _load_mesh_for_viz(self._hole_urdf_abs, self._material_viz)
+        self._object_mesh = _load_mesh_for_viz(self._object_urdf_abs, self._material_viz)
+        # Exported once here: the fork scan's GLB is ~4 MB.
+        self._hole_glb = self._object_glb = None
+        if self._material_viz:
+            hole_scene = _load_scene_for_viz(self._hole_urdf_abs)
+            object_scene = _load_scene_for_viz(self._object_urdf_abs)
+            if hole_scene is not None:
+                self._hole_glb = hole_scene.export(file_type="glb")
+            if object_scene is not None:
+                self._object_glb = object_scene.export(file_type="glb")
+
+    def _on_problem_change(self) -> None:
+        """Select the policy named after the chosen problem, if there is one."""
+        problem_name = self._dd_problem.value
+        if problem_name in self.policies:
+            self._dd_policy.value = problem_name
 
     def _build_gui(self):
         self.server.gui.add_markdown(
@@ -280,6 +336,7 @@ class PegDynamicDemo:
                 "Policy", options=list(self.policies.keys()),
                 initial_value=self.initial_policy,
             )
+            self._dd_problem.on_update(lambda _: self._on_problem_change())
             self._dd_goal_mode = self.server.gui.add_dropdown(
                 "Goal mode", options=GOAL_MODES, initial_value=self.goal_mode,
             )
@@ -437,6 +494,11 @@ class PegDynamicDemo:
         eval overlay and lets the goal ghost opacity update live.
         """
         rgb = color[:3] if len(color) >= 3 else color
+        # The object (not the goal ghost) is drawn with its own materials when
+        # opaque; add_glb has no opacity, so translucent falls back to flat.
+        if (node_name == "/object" and opacity >= 0.999
+                and getattr(self, "_object_glb", None) is not None):
+            return self.server.scene.add_glb(f"{node_name}/mesh", glb_data=self._object_glb)
         verts = np.array(self._object_mesh.vertices, dtype=np.float32)
         faces = np.array(self._object_mesh.faces, dtype=np.uint32)
         return self.server.scene.add_mesh_simple(
@@ -492,17 +554,23 @@ class PegDynamicDemo:
             wxyz=(1, 0, 0, 0), show_axes=False,
         )
         self._dyn.append(self._hole_frame)
-        self._hole_viz = self.server.scene.add_mesh_simple(
-            "/hole/mesh",
-            vertices=np.array(self._hole_mesh.vertices, dtype=np.float32),
-            faces=np.array(self._hole_mesh.faces, dtype=np.uint32),
-            color=(120, 120, 120),
-            opacity=float(self._sl_fixture_opacity.value),
-        )
+        self._hole_viz = self._add_hole_viz()
         self._dyn.append(self._hole_viz)
         self._apply_goal_visibility()
         self._apply_fixture_opacity()
         self._apply_object_opacity()
+
+    def _add_hole_viz(self):
+        opacity = float(self._sl_fixture_opacity.value)
+        if opacity >= 0.999 and getattr(self, "_hole_glb", None) is not None:
+            return self.server.scene.add_glb("/hole/mesh", glb_data=self._hole_glb)
+        return self.server.scene.add_mesh_simple(
+            "/hole/mesh",
+            vertices=np.array(self._hole_mesh.vertices, dtype=np.float32),
+            faces=np.array(self._hole_mesh.faces, dtype=np.uint32),
+            color=(120, 120, 120),
+            opacity=opacity,
+        )
 
     def _update_hole_viz(self, hole_pose):
         # Accept either legacy 3-vec position-only or 7-vec pose (x,y,z,qx,qy,qz,qw).
@@ -556,6 +624,19 @@ class PegDynamicDemo:
                 pass
 
     def _apply_fixture_opacity(self):
+        if self._hole_viz is not None and getattr(self, "_hole_glb", None) is not None:
+            # GLB handles have no opacity: rebuild (GLB when opaque, flat otherwise).
+            try:
+                self._hole_viz.remove()
+            except Exception:
+                pass
+            try:
+                self._dyn.remove(self._hole_viz)
+            except ValueError:
+                pass
+            self._hole_viz = self._add_hole_viz()
+            self._dyn.append(self._hole_viz)
+            return
         if self._hole_viz is not None:
             self._set_viz_opacity(
                 self._hole_viz, float(self._sl_fixture_opacity.value)

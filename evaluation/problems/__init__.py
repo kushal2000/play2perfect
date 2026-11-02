@@ -4,7 +4,7 @@ A `Problem` is the triple `(insertion_object, receptive_object, insert_poses)`
 that fully specifies a precise-assembly env configuration. Each sub-package
 (`peg`, `fabrica`, `furniture_bench`) registers its problems into
 `PROBLEM_REGISTRY` on import; importing `evaluation.problems` triggers all of
-them. The registry is then filtered down to the four problems released here
+them. The registry is then filtered down to the problems released here
 (see `_RELEASED_PROBLEMS` at the bottom of this file).
 """
 
@@ -132,11 +132,13 @@ PROBLEM_REGISTRY: Dict[str, Problem] = {}
 from . import peg               # noqa: E402, F401
 from . import fabrica           # noqa: E402, F401
 from . import furniture_bench   # noqa: E402, F401
+from . import plug_fork         # noqa: E402, F401
 
 
 # The data-driven registration above populates PROBLEM_REGISTRY with every
-# problem variant the shipped assets support. This release exposes only the four
-# assembly tasks from the paper, under their public (branded) names. We keep the
+# problem variant the shipped assets support. This release exposes the four
+# assembly tasks from the paper plus two everyday-object insertions, under their
+# public (branded) names. We keep the
 # internal registration logic intact and remap the four kept entries here.
 import dataclasses as _dc  # noqa: E402
 
@@ -147,6 +149,9 @@ _RELEASED_PROBLEMS = {
     "beam_assembly_step1": "fabrica.beam_3x.part_2_matchedmass_sdf_hybrid",
     "beam_assembly_step2": "fabrica.beam_3x.part_0_matchedmass_sdf_hybrid",
     "screwing": "furniture_bench.one_leg_matchedmass_sdf_hybrid_super_dense",
+    # Everyday objects at real-world scale.
+    "fork_insertion": "fork.tol1mm",
+    "plug_insertion": "plug.tol0p5mm",
 }
 
 _missing = [k for k in _RELEASED_PROBLEMS.values() if k not in PROBLEM_REGISTRY]

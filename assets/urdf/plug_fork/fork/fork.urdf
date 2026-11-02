@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<!--
+  YCB 030_fork at true scale (197.6 x 27.1 x 15.9 mm).
+
+  visual    : the scan with its own texture.
+  collision : 9 CoACD hulls (threshold 0.03). Axis-aligned slab
+              boxes were tried first and more than DOUBLED the volume
+              (46.5 vs 19.6 cm^3) by filling the dished head solid,
+              unusable when the task clearance is 1 mm. CoACD is +15%,
+              and that residual is tine gaps, which is the floor for any
+              convex decomposition.
+
+  mass      : 55 g, a real dinner fork. The scan is solid
+              where the real part is thin, so stainless density would
+              give 155 g; mass is set from the real object instead.
+
+  Frame: long axis on Z with the HANDLE pointing -Z, i.e. the entry
+  direction. Meshes are pre-oriented, so all origins here are identity.
+-->
+<robot name="ycb_fork">
+  <link name="ycb_fork">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="fork_visual_oriented.obj"/></geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="coacd_hull_00_oriented.ply"/></geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="coacd_hull_01_oriented.ply"/></geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="coacd_hull_02_oriented.ply"/></geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="coacd_hull_03_oriented.ply"/></geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="coacd_hull_04_oriented.ply"/></geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="coacd_hull_05_oriented.ply"/></geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="coacd_hull_06_oriented.ply"/></geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="coacd_hull_07_oriented.ply"/></geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="coacd_hull_08_oriented.ply"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="0.055000"/>
+      <origin xyz="-0.033910 0.000766 0.000337" rpy="0 0 0"/>
+      <inertia ixx="1.863806e-06" ixy="-1.330871e-07" ixz="-1.773305e-06" iyy="1.316788e-04" iyz="-1.041935e-07" izz="1.324597e-04"/>
+    </inertial>
+  </link>
+</robot>

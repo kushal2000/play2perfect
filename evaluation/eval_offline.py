@@ -1,6 +1,6 @@
 """Offline (headless) success-rate evaluation of the released checkpoints.
 
-For each of the four assembly problems, this runs the policy across a large batch
+For each released assembly problem, this runs the policy across a large batch
 of parallel envs in Isaac Sim and scores only each env's FIRST episode (so the N
 envs are N i.i.d. trials). Envs whose first episode ends within --min-episode-steps
 are discarded as unstable inits (object fell / ungraspable at reset → the task was
@@ -11,7 +11,7 @@ process, the driver evaluates each problem in its own subprocess (the same
 pattern as ``eval_isaacsim.py``) and prints a summary table.
 
 Usage:
-    # Evaluate all four problems with the downloaded checkpoints
+    # Evaluate all released problems with the downloaded checkpoints
     python evaluation/eval_offline.py --policies-dir pretrained_assembly
 
     # A single problem
@@ -40,6 +40,8 @@ ALL_PROBLEMS = [
     "beam_assembly_step1",
     "beam_assembly_step2",
     "screwing",
+    "fork_insertion",
+    "plug_insertion",
 ]
 _RESULT_PREFIX = "RESULT_JSON "
 
@@ -245,7 +247,7 @@ def run_driver(args) -> int:
 
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--problem", default=None, help="Single problem to eval (default: all four).")
+    p.add_argument("--problem", default=None, help="Single problem to eval (default: all released).")
     p.add_argument("--policies-dir", default="pretrained_assembly",
                    help="Dir of <problem>/model.pth checkpoints (driver mode).")
     p.add_argument("--checkpoint-path", default=None, help="Explicit checkpoint (single problem).")

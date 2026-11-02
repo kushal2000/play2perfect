@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<!--
+  Flatware holder, 1 mm clearance per side.
+
+  Slot 17.43 x 20.69 mm, sized from the fork's SWEPT
+  envelope over its leading half (15.43 x 18.69 mm),
+  NOT from any single cross-section. The head is dished, so per-station
+  measurements understate what a straight slot has to clear, and a slot
+  cut to them would not admit the fork at all.
+
+  Collision is the four walls + floor as exact boxes. This is procedural
+  geometry, so boxes are the ground truth rather than an approximation;
+  the visual mesh adds rounds, a chamfered mouth and perforations, none
+  of which the physics needs.
+
+  Block 90 x 70 x 85 mm, origin at its centroid, so the Problem
+  must use hole_z_offset = 0.0425 to seat it on the table.
+-->
+<robot name="holder_tol1mm">
+  <material name="holder_steel"><color rgba="0.69 0.71 0.74 1.0"/></material>
+  <link name="hole">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="holder_tol1mm_visual.glb"/></geometry>
+      <material name="holder_steel"/>
+    </visual>
+    <collision>
+      <origin xyz="0.000000 0.000000 -0.040000" rpy="0 0 0"/>
+      <geometry><box size="0.090000 0.070000 0.005000"/></geometry>
+    </collision>
+    <collision>
+      <origin xyz="-0.026858 0.000000 0.002500" rpy="0 0 0"/>
+      <geometry><box size="0.036283 0.070000 0.080000"/></geometry>
+    </collision>
+    <collision>
+      <origin xyz="0.026858 0.000000 0.002500" rpy="0 0 0"/>
+      <geometry><box size="0.036283 0.070000 0.080000"/></geometry>
+    </collision>
+    <collision>
+      <origin xyz="0.000000 0.022673 0.002500" rpy="0 0 0"/>
+      <geometry><box size="0.017434 0.024654 0.080000"/></geometry>
+    </collision>
+    <collision>
+      <origin xyz="0.000000 -0.022673 0.002500" rpy="0 0 0"/>
+      <geometry><box size="0.017434 0.024654 0.080000"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="0.476241"/>
+      <origin xyz="0.000000 0.000000 -0.000142" rpy="0 0 0"/>
+      <inertia ixx="4.929972e-04" ixy="6.946111e-21" ixz="-1.369433e-20" iyy="6.275101e-04" iyz="-1.098019e-21" izz="5.436623e-04"/>
+    </inertial>
+  </link>
+</robot>

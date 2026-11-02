@@ -1,18 +1,18 @@
 """Download Play2Perfect checkpoints from the Hugging Face Hub.
 
-Downloads the Stage-1 "play" policy and/or the four finetuned precise-assembly
+Downloads the Stage-1 "play" policy and/or the finetuned precise-assembly
 policies:
 
   pretrained_policy/{model.pth,config.yaml}                      # Stage-1 play
-  pretrained_assembly/<problem_key>/{model.pth,config.yaml}      # 4 assembly tasks
+  pretrained_assembly/<problem_key>/{model.pth,config.yaml}      # assembly tasks
 
 The ``pretrained_assembly/`` layout is what ``evaluation/eval_isaacsim.py``
 discovers via ``--policies-dir pretrained_assembly``.
 
 Usage:
-    python download_checkpoints.py                       # everything (play + 4 tasks)
+    python download_checkpoints.py                       # everything (play + all tasks)
     python download_checkpoints.py --what play           # just the Stage-1 policy
-    python download_checkpoints.py --what assembly       # just the 4 task policies
+    python download_checkpoints.py --what assembly       # just the task policies
     python download_checkpoints.py --problems tight_insertion
 """
 
@@ -28,12 +28,14 @@ REPO_ROOT = Path(__file__).parent
 # Subfolder in the HF repo that holds the Stage-1 play policy.
 PLAY_SUBDIR = "play"
 
-# The four released assembly tasks (keys into evaluation.problems.PROBLEM_REGISTRY).
+# The released assembly tasks (keys into evaluation.problems.PROBLEM_REGISTRY).
 ALL_PROBLEMS = [
     "tight_insertion",
     "beam_assembly_step1",
     "beam_assembly_step2",
     "screwing",
+    "fork_insertion",
+    "plug_insertion",
 ]
 
 
@@ -44,7 +46,7 @@ class DownloadArgs:
     what: str = "all"
     """Which checkpoints to fetch: 'all', 'play', or 'assembly'."""
     problems: List[str] = field(default_factory=lambda: list(ALL_PROBLEMS))
-    """Subset of assembly problem keys to download (defaults to all four)."""
+    """Subset of assembly problem keys to download (defaults to all)."""
 
 
 def _snapshot(repo_id: str, subdir: str, into: Path) -> Path:

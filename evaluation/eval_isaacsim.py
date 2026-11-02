@@ -7,7 +7,7 @@ launched with ``--python`` (default: ``.venv_isaacsim/bin/python``), which strea
 poses back to the viewer. Open ``http://localhost:<port>`` to watch the rollout.
 
 Examples:
-    # Single checkpoint for one of the four problems
+    # Single checkpoint for one problem
     python evaluation/eval_isaacsim.py \
         --checkpoint-path pretrained_assembly/tight_insertion/model.pth \
         --problem tight_insertion --port 8044
@@ -718,7 +718,13 @@ def _run_viewer(args) -> int:
     if not selected_policy.checkpoint.is_file():
         raise FileNotFoundError(f"checkpoint not found: {selected_policy.checkpoint}")
 
-    initial_problem = args.problem or selected_policy.problem or DEFAULT_PROBLEM
+    from evaluation.problems import PROBLEM_REGISTRY
+
+    # pretrained_assembly/<problem>/ subdirs are named after their problem.
+    policy_problem = selected_policy.problem or (
+        selected_policy.name if selected_policy.name in PROBLEM_REGISTRY else None
+    )
+    initial_problem = args.problem or policy_problem or DEFAULT_PROBLEM
     extra_overrides = {
         key: _coerce_override_value(value)
         for key, value in args.override
