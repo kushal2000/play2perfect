@@ -8,6 +8,7 @@ from isaaclab.utils import configclass
 from isaacsimenvs.tasks.play.play_env_cfg import (
     AssetsCfg,
     PlayEnvCfg,
+    RewardCfg,
     _default_sim_cfg,
 )
 
@@ -111,8 +112,29 @@ class PreciseAssemblyEnvCfg(PlayEnvCfg):
     precise_assembly: PreciseAssemblyCfg = PreciseAssemblyCfg()
 
 
+@configclass
+class PreciseAssemblyFlexivWujiRightEnvCfg(PreciseAssemblyEnvCfg):
+    """Precise assembly on the Flexiv Rizon 4s + right Wuji Hand 2
+    (``Isaacsimenvs-PreciseAssemblyFlexivWujiRight-Direct-v0``), finetuned from the
+    ``Isaacsimenvs-PlayFlexivWujiRight-Direct-v0`` play policy.
+
+    The robot, self-collision, table and fingertip-distance settings are that Play task's; the
+    hole is placed relative to the table centre (``reset.table_reset_xy``).
+    """
+
+    robot: str = "flexiv_wuji_right_human_like"
+    robot_self_collision: bool = True
+    action_space: int = 27  # 7-DOF Rizon 4s + 20-DOF Wuji hand
+    assets: PreciseAssemblyAssetsCfg = PreciseAssemblyAssetsCfg(
+        robot_urdf="assets/urdf/flexiv_wuji/rizon4s_right_wuji_human_like_joint_limits.urdf",
+        table_urdf="assets/urdf/table_narrow_flexiv.urdf",
+    )
+    reward: RewardCfg = RewardCfg(fingertip_distance_from_pad=True)
+
+
 __all__ = [
     "PreciseAssemblyEnvCfg",
+    "PreciseAssemblyFlexivWujiRightEnvCfg",
     "PreciseAssemblyAssetsCfg",
     "PreciseAssemblyCfg",
     "VALID_GOAL_MODES",

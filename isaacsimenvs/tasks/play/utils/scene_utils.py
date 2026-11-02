@@ -21,90 +21,30 @@ from isaaclab.sim.spawners.from_files import GroundPlaneCfg, UsdFileCfg, spawn_g
 from isaaclab.sim.spawners.wrappers import MultiUsdFileCfg
 from isaaclab.sim.utils import find_matching_prim_paths, get_current_stage
 
+from ..robots import KUKA_SHARPA, RobotSpec
 from .generate_objects import generate_handle_head_urdfs
+from .goal_table_clearance import collision_corners
 
 
 # ----------------------------------------------------------------------------
-# Joint names / regexes / body names
+# Joint names / regexes / body names / gains
 # ----------------------------------------------------------------------------
+# The robot lives in ``robots.py`` (one RobotSpec per embodiment, picked by ``cfg.robot``). These
+# module names are the Kuka + Sharpa's, kept because other tasks and the Newton patches read them.
 
-ARM_JOINT_REGEX = "iiwa14_joint_.*"
-HAND_JOINT_REGEX = "left_.*"
-
+ARM_JOINT_REGEX = KUKA_SHARPA.arm_joint_regex
+HAND_JOINT_REGEX = KUKA_SHARPA.hand_joint_regex
 # Legacy policy order; Isaac Lab tensors are permuted at action/obs boundaries.
-JOINT_NAMES_CANONICAL: tuple[str, ...] = (
-    "iiwa14_joint_1", "iiwa14_joint_2", "iiwa14_joint_3", "iiwa14_joint_4",
-    "iiwa14_joint_5", "iiwa14_joint_6", "iiwa14_joint_7",
-    "left_1_thumb_CMC_FE", "left_thumb_CMC_AA", "left_thumb_MCP_FE",
-    "left_thumb_MCP_AA", "left_thumb_IP",
-    "left_2_index_MCP_FE", "left_index_MCP_AA", "left_index_PIP", "left_index_DIP",
-    "left_3_middle_MCP_FE", "left_middle_MCP_AA", "left_middle_PIP", "left_middle_DIP",
-    "left_4_ring_MCP_FE", "left_ring_MCP_AA", "left_ring_PIP", "left_ring_DIP",
-    "left_5_pinky_CMC", "left_pinky_MCP_FE", "left_pinky_MCP_AA",
-    "left_pinky_PIP", "left_pinky_DIP",
-)
-assert len(JOINT_NAMES_CANONICAL) == 29
-
-PALM_BODY_NAME = "iiwa14_link_7"
-# Merged fingertip bodies land on the DP links in both sims.
-FINGERTIP_BODY_REGEX = "left_(index|middle|ring|thumb|pinky)_DP"
-FINGERTIP_LINK_NAMES: tuple[str, ...] = (
-    "left_index_DP", "left_middle_DP", "left_ring_DP",
-    "left_thumb_DP", "left_pinky_DP",
-)
-
-
+JOINT_NAMES_CANONICAL: tuple[str, ...] = KUKA_SHARPA.joint_names_canonical
+PALM_BODY_NAME = KUKA_SHARPA.palm_body_name
+FINGERTIP_BODY_REGEX = KUKA_SHARPA.fingertip_body_regex
+FINGERTIP_LINK_NAMES: tuple[str, ...] = KUKA_SHARPA.fingertip_link_names
 # Per-joint PD gains and dynamics (verified with pretrained checkpoint).
-ARM_JOINT_STIFFNESS: dict[str, float] = {
-    "iiwa14_joint_1": 600.0, "iiwa14_joint_2": 600.0, "iiwa14_joint_3": 500.0,
-    "iiwa14_joint_4": 400.0, "iiwa14_joint_5": 200.0, "iiwa14_joint_6": 200.0,
-    "iiwa14_joint_7": 200.0,
-}
-ARM_JOINT_DAMPING: dict[str, float] = {
-    "iiwa14_joint_1": 27.027026473513512, "iiwa14_joint_2": 27.027026473513512,
-    "iiwa14_joint_3": 24.672186769721083, "iiwa14_joint_4": 22.067474708266914,
-    "iiwa14_joint_5": 9.752538131173853, "iiwa14_joint_6": 9.147747263670984,
-    "iiwa14_joint_7": 9.147747263670984,
-}
-
-HAND_JOINT_STIFFNESS: dict[str, float] = {
-    "left_1_thumb_CMC_FE": 6.95, "left_thumb_CMC_AA": 13.2, "left_thumb_MCP_FE": 4.76,
-    "left_thumb_MCP_AA": 6.62, "left_thumb_IP": 0.9,
-    "left_2_index_MCP_FE": 4.76, "left_index_MCP_AA": 6.62,
-    "left_index_PIP": 0.9, "left_index_DIP": 0.9,
-    "left_3_middle_MCP_FE": 4.76, "left_middle_MCP_AA": 6.62,
-    "left_middle_PIP": 0.9, "left_middle_DIP": 0.9,
-    "left_4_ring_MCP_FE": 4.76, "left_ring_MCP_AA": 6.62,
-    "left_ring_PIP": 0.9, "left_ring_DIP": 0.9,
-    "left_5_pinky_CMC": 1.38, "left_pinky_MCP_FE": 4.76, "left_pinky_MCP_AA": 6.62,
-    "left_pinky_PIP": 0.9, "left_pinky_DIP": 0.9,
-}
-HAND_JOINT_DAMPING: dict[str, float] = {
-    "left_1_thumb_CMC_FE": 0.28676845, "left_thumb_CMC_AA": 0.40845109,
-    "left_thumb_MCP_FE": 0.20394083, "left_thumb_MCP_AA": 0.24044435,
-    "left_thumb_IP": 0.04190723,
-    "left_2_index_MCP_FE": 0.20859232, "left_index_MCP_AA": 0.24595532,
-    "left_index_PIP": 0.04243185, "left_index_DIP": 0.03504461,
-    "left_3_middle_MCP_FE": 0.2085923, "left_middle_MCP_AA": 0.24595532,
-    "left_middle_PIP": 0.04243185, "left_middle_DIP": 0.03504461,
-    "left_4_ring_MCP_FE": 0.20859226, "left_ring_MCP_AA": 0.24595528,
-    "left_ring_PIP": 0.04243183, "left_ring_DIP": 0.0350446,
-    "left_5_pinky_CMC": 0.02782345, "left_pinky_MCP_FE": 0.20859229,
-    "left_pinky_MCP_AA": 0.24595528, "left_pinky_PIP": 0.04243183,
-    "left_pinky_DIP": 0.0350446,
-}
-HAND_JOINT_ARMATURE: dict[str, float] = {
-    "left_1_thumb_CMC_FE": 0.0032, "left_thumb_CMC_AA": 0.0032,
-    "left_thumb_MCP_FE": 0.00265, "left_thumb_MCP_AA": 0.00265, "left_thumb_IP": 0.0006,
-    "left_2_index_MCP_FE": 0.00265, "left_index_MCP_AA": 0.00265,
-    "left_index_PIP": 0.0006, "left_index_DIP": 0.00042,
-    "left_3_middle_MCP_FE": 0.00265, "left_middle_MCP_AA": 0.00265,
-    "left_middle_PIP": 0.0006, "left_middle_DIP": 0.00042,
-    "left_4_ring_MCP_FE": 0.00265, "left_ring_MCP_AA": 0.00265,
-    "left_ring_PIP": 0.0006, "left_ring_DIP": 0.00042,
-    "left_5_pinky_CMC": 0.00012, "left_pinky_MCP_FE": 0.00265,
-    "left_pinky_MCP_AA": 0.00265, "left_pinky_PIP": 0.0006, "left_pinky_DIP": 0.00042,
-}
+ARM_JOINT_STIFFNESS: dict[str, float] = KUKA_SHARPA.arm_stiffness
+ARM_JOINT_DAMPING: dict[str, float] = KUKA_SHARPA.arm_damping
+HAND_JOINT_STIFFNESS: dict[str, float] = KUKA_SHARPA.hand_stiffness
+HAND_JOINT_DAMPING: dict[str, float] = KUKA_SHARPA.hand_damping
+HAND_JOINT_ARMATURE: dict[str, float] = KUKA_SHARPA.hand_armature
 HAND_JOINT_FRICTION: dict[str, float] = {
     "left_1_thumb_CMC_FE": 0.132, "left_thumb_CMC_AA": 0.132,
     "left_thumb_MCP_FE": 0.07456, "left_thumb_MCP_AA": 0.07456, "left_thumb_IP": 0.01276,
@@ -118,16 +58,10 @@ HAND_JOINT_FRICTION: dict[str, float] = {
     "left_pinky_MCP_AA": 0.07456, "left_pinky_PIP": 0.01276, "left_pinky_DIP": 0.00378738,
 }
 
-assert len(ARM_JOINT_STIFFNESS) == 7 and len(ARM_JOINT_DAMPING) == 7
-assert len(HAND_JOINT_STIFFNESS) == 22 and len(HAND_JOINT_DAMPING) == 22
-assert len(HAND_JOINT_ARMATURE) == 22 and len(HAND_JOINT_FRICTION) == 22
+assert len(HAND_JOINT_FRICTION) == 22
 
 # Proven-working default arm pose.
-ARM_DEFAULT_JOINT_POS: dict[str, float] = {
-    "iiwa14_joint_1": -1.571, "iiwa14_joint_2": 1.571, "iiwa14_joint_3": 0.0,
-    "iiwa14_joint_4": 1.376, "iiwa14_joint_5": 0.0, "iiwa14_joint_6": 1.485,
-    "iiwa14_joint_7": 1.308,
-}
+ARM_DEFAULT_JOINT_POS: dict[str, float] = KUKA_SHARPA.arm_default_joint_pos
 
 _CONTACT_OFFSET = 0.002
 _REST_OFFSET = 0.0
@@ -147,7 +81,9 @@ _PHYSICS_SPECS: dict[str, tuple[str, str, str]] = {
 }
 
 
-def build_robot_articulation_usd_cfg(usd_path: str) -> ArticulationCfg:
+def build_robot_articulation_usd_cfg(
+    usd_path: str, spec: RobotSpec = KUKA_SHARPA
+) -> ArticulationCfg:
     return ArticulationCfg(
         prim_path="/World/envs/env_.*/Robot",
         spawn=UsdFileCfg(usd_path=usd_path),
@@ -155,22 +91,25 @@ def build_robot_articulation_usd_cfg(usd_path: str) -> ArticulationCfg:
             pos=(0.0, 0.8, 0.0),
             rot=(1.0, 0.0, 0.0, 0.0),
             joint_pos={
-                **ARM_DEFAULT_JOINT_POS,
-                **{name: 0.0 for name in HAND_JOINT_STIFFNESS},
+                **spec.arm_default_joint_pos,
+                **{name: 0.0 for name in spec.hand_joint_names},
             },
             joint_vel={".*": 0.0},
         ),
         actuators={
             "arm": ImplicitActuatorCfg(
-                joint_names_expr=[ARM_JOINT_REGEX],
-                stiffness=ARM_JOINT_STIFFNESS,
-                damping=ARM_JOINT_DAMPING,
+                joint_names_expr=[spec.arm_joint_regex],
+                stiffness=spec.arm_stiffness,
+                damping=spec.arm_damping,
             ),
             "hand": ImplicitActuatorCfg(
-                joint_names_expr=[HAND_JOINT_REGEX],
-                stiffness=HAND_JOINT_STIFFNESS,
-                damping=HAND_JOINT_DAMPING,
-                armature=HAND_JOINT_ARMATURE,
+                joint_names_expr=[spec.hand_joint_regex],
+                stiffness=spec.hand_stiffness,
+                damping=spec.hand_damping,
+                armature=spec.hand_armature,
+                effort_limit_sim=spec.hand_effort_limit,
+                velocity_limit_sim=spec.hand_velocity_limit,
+                friction=spec.hand_friction,
             ),
         },
     )
@@ -1265,6 +1204,14 @@ def _apply_urdf_sdf_collision_markers(
         )
 
 
+def _urdf_box_size(urdf_path) -> tuple[float, float, float]:
+    """The table's collision ``<box size>`` (the single-box table URDFs)."""
+    boxes = ET.parse(urdf_path).getroot().findall("link/collision/geometry/box")
+    if len(boxes) != 1:
+        raise ValueError(f"{urdf_path}: expected one collision box, got {len(boxes)}")
+    return tuple(float(v) for v in boxes[0].get("size").split())
+
+
 def _generate_scaled_table_urdfs(
     base_urdf_path: str,
     num_variants: int,
@@ -1349,6 +1296,56 @@ def _convert_urdf_to_usd(
     )
     return usd_path
 
+
+
+def _apply_self_collision_filters(usd_path: str, pairs: dict[str, tuple[str, ...]]) -> int:
+    """Author ``FilteredPairsAPI`` on the robot's bodies so ``pairs`` (``RobotSpec.
+    self_collision_filter``) do not collide with each other; returns how many were authored.
+
+    With the articulation's self-collisions on, this is Isaac Gym's behaviour in SimToolReal:
+    everything collides except the listed pairs. Ported from simtoolreal 84058661, with one
+    change: every name must be a body of the imported robot. Upstream skipped unknown names,
+    which is how a filter list for the wrong robot (or pre-merge_fixed_joints names) would leave
+    self-collision on with nothing filtered, and the hand exploding at reset.
+    """
+    from pxr import Usd, UsdPhysics
+
+    raw_usd_path = Path(usd_path)
+    physics_usd_path = raw_usd_path.parent / "configuration" / f"{raw_usd_path.stem}_physics.usd"
+    edit_usd_path = physics_usd_path if physics_usd_path.exists() else raw_usd_path
+    stage = Usd.Stage.Open(str(edit_usd_path), Usd.Stage.LoadAll)
+    if stage is None:
+        raise RuntimeError(f"Failed to open USD while applying self-collision filters: {edit_usd_path}")
+
+    body_by_name = {
+        prim.GetName(): prim
+        for prim in Usd.PrimRange(stage.GetPseudoRoot(), Usd.TraverseInstanceProxies())
+        if prim.HasAPI(UsdPhysics.RigidBodyAPI)
+    }
+    unknown = sorted({n for a, bs in pairs.items() for n in (a, *bs)} - set(body_by_name))
+    if unknown:
+        raise RuntimeError(
+            f"self-collision filter names {unknown} are not bodies of {edit_usd_path.name} "
+            f"(bodies: {sorted(body_by_name)}); names must be post-merge_fixed_joints"
+        )
+
+    authored = 0
+    for link, partners in pairs.items():
+        rel = UsdPhysics.FilteredPairsAPI.Apply(body_by_name[link]).CreateFilteredPairsRel()
+        existing = set(rel.GetTargets())
+        for partner in partners:
+            path = body_by_name[partner].GetPath()
+            if path not in existing:
+                rel.AddTarget(path)
+                existing.add(path)
+                authored += 1
+    stage.GetRootLayer().Save()
+    print(
+        f"[scene_utils] self-collision: filtered {authored} link pairs "
+        f"across {len(body_by_name)} robot bodies in {edit_usd_path.name}",
+        flush=True,
+    )
+    return authored
 
 
 def _robot_joint_drive_cfg():
@@ -1482,7 +1479,7 @@ def apply_physx_material_properties(env) -> None:
     for link_name, link_path in zip(robot_view.shared_metatype.link_names, robot_view.link_paths[0]):
         link_view = env.robot._physics_sim_view.create_rigid_body_view(link_path)
         shape_end = shape_start + link_view.max_shapes
-        if link_name in FINGERTIP_LINK_NAMES:
+        if link_name in env.robot_spec.fingertip_link_names:
             robot_materials[:, shape_start:shape_end] = fingertip
             fingertip_mask[shape_start:shape_end] = True
         shape_start = shape_end
@@ -1514,7 +1511,11 @@ def apply_physx_material_properties(env) -> None:
         materials = view.get_material_properties()
         materials[:] = default
         if name == "object" and obj_active:
-            obj_base = float(assets_cfg.robot_friction)
+            # Was `robot_friction`. Dormant on both counts today -- the branch needs
+            # `object_friction_scale_range != (1.0, 1.0)` to run at all, and the two frictions
+            # are both 0.5 -- so it changes no current result. It would have scaled object
+            # friction off the robot's base the moment either of those stopped being true.
+            obj_base = float(assets_cfg.object_friction)
             bucket_vals = torch.linspace(obj_lo, obj_hi, n_buckets) * obj_base
             bucket_idx = torch.randint(0, n_buckets, (env.num_envs,))
             per_env_obj = bucket_vals[bucket_idx]  # (N_envs,)
@@ -1607,16 +1608,22 @@ def setup_scene(env) -> None:
         for usd in object_raw_usds
     ]
 
+    # Self-collision is per registered task (cfg.robot_self_collision): on, it is SimToolReal's
+    # Isaac Gym setup -- everything collides except the spec's filtered pairs.
+    self_collision = bool(getattr(env.cfg, "robot_self_collision", False))
+    robot_converted_usd = _convert_urdf_to_usd(
+        assets_cfg.robot_urdf, usd_work_dir,
+        fix_base=True, self_collision=self_collision,
+        joint_drive=_robot_joint_drive_cfg(),
+    )
+    if self_collision:
+        _apply_self_collision_filters(robot_converted_usd, env.robot_spec.self_collision_filter)
     robot_usd_path = _bake_usd(
-        _convert_urdf_to_usd(
-            assets_cfg.robot_urdf, usd_work_dir,
-            fix_base=True, self_collision=False,
-            joint_drive=_robot_joint_drive_cfg(),
-        ),
+        robot_converted_usd,
         bake_root, "robot",
         props=dict(
             disable_gravity=True, max_depenetration_velocity=1000.0,
-            enabled_self_collisions=False,
+            enabled_self_collisions=self_collision,
             solver_position_iterations=8, solver_velocity_iterations=0,
         ),
         apply_physx_articulation=True,
@@ -1678,7 +1685,7 @@ def setup_scene(env) -> None:
     _materialize_env_prims(env)
 
     # 4. Spawn assets.
-    env.robot = Articulation(build_robot_articulation_usd_cfg(robot_usd_path))
+    env.robot = Articulation(build_robot_articulation_usd_cfg(robot_usd_path, spec=env.robot_spec))
     env.table = RigidObject(build_rigid_object_cfg("/World/envs/env_.*/Table", table_usd_paths))
     env.object = RigidObject(build_rigid_object_cfg("/World/envs/env_.*/Object", object_usd_paths))
     env.goal_viz = RigidObject(build_rigid_object_cfg("/World/envs/env_.*/GoalViz", goalviz_usd_paths))
@@ -1691,6 +1698,13 @@ def setup_scene(env) -> None:
 
     # 6. Per-env scale tensor for spawned Objects.
     _build_object_scale_tensor(env, object_scales_normalized, len(object_usd_paths))
+    # ... and each env's object collision-box corners and the table's half height, which keep
+    # goals clear of the table (reset.goal_table_clearance_m).
+    pool_corners = torch.stack([
+        torch.as_tensor(collision_corners(p), device=env.device) for p in env._object_urdf_paths
+    ])
+    env._object_collision_corners = pool_corners[env._object_asset_index_per_env]
+    env._table_half_height = _urdf_box_size(assets_cfg.table_urdf)[2] / 2
 
     # 7. Register with scene so DirectRLEnv refreshes their tensors each step.
     env.scene.articulations["robot"] = env.robot

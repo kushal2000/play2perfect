@@ -13,6 +13,7 @@ from isaaclab.assets import Articulation, RigidObject, RigidObjectCfg
 from isaaclab.sim.spawners.from_files import GroundPlaneCfg, UsdFileCfg, spawn_ground_plane
 
 from isaacsimenvs.tasks.play.utils.scene_utils import (
+    _apply_self_collision_filters,
     _bake_usd,
     _convert_urdf_to_usd,
     _log_scene_step,
@@ -21,6 +22,7 @@ from isaacsimenvs.tasks.play.utils.scene_utils import (
     build_robot_articulation_usd_cfg,
     hide_goal_viz_for_student_camera,
     setup_student_camera,
+    _urdf_box_size,
 )
 
 
@@ -110,20 +112,26 @@ def setup_scene(env) -> None:
         ),
     )
 
+    # Robot self-collision follows the Play task the policy was pretrained on: off for the
+    # Kuka, on (minus RobotSpec.self_collision_filter) for the Flexiv + Wuji.
+    self_collision = bool(getattr(env.cfg, "robot_self_collision", False))
+    robot_converted_usd = _convert_urdf_to_usd(
+        _asset_path(assets_cfg.robot_urdf),
+        usd_work_dir,
+        fix_base=True,
+        self_collision=self_collision,
+        joint_drive=_robot_joint_drive_cfg(),
+    )
+    if self_collision:
+        _apply_self_collision_filters(robot_converted_usd, env.robot_spec.self_collision_filter)
     robot_usd_path = _bake_usd(
-        _convert_urdf_to_usd(
-            _asset_path(assets_cfg.robot_urdf),
-            usd_work_dir,
-            fix_base=True,
-            self_collision=False,
-            joint_drive=_robot_joint_drive_cfg(),
-        ),
+        robot_converted_usd,
         bake_root,
         "robot",
         props=dict(
             disable_gravity=True,
             max_depenetration_velocity=1000.0,
-            enabled_self_collisions=False,
+            enabled_self_collisions=self_collision,
             solver_position_iterations=8,
             solver_velocity_iterations=0,
         ),
@@ -153,7 +161,7 @@ def setup_scene(env) -> None:
     # the noisy "Varying assets ... however replicate_physics is enabled"
     # warning under `replicate_physics=True`. The regex prim_path is kept so
     # Articulation / RigidObject discover all envs after clone.
-    env.robot = Articulation(build_robot_articulation_usd_cfg(robot_usd_path))
+    env.robot = Articulation(build_robot_articulation_usd_cfg(robot_usd_path, spec=env.robot_spec))
     env.table = RigidObject(_pih_rigid_object_cfg("/World/envs/env_.*/Table", table_usd_path))
     env.hole = RigidObject(_pih_rigid_object_cfg("/World/envs/env_.*/Hole", hole_usd_path))
     env.object = RigidObject(_pih_rigid_object_cfg("/World/envs/env_.*/Object", object_usd_path))
@@ -172,6 +180,8 @@ def setup_scene(env) -> None:
     env._object_asset_index_per_env = torch.zeros(
         env.num_envs, device=env.device, dtype=torch.long
     )
+    # Half the table slab's height: 0.15 for the Kuka's table, 0.02 for the Flexiv's.
+    env._table_half_height = _urdf_box_size(_asset_path(assets_cfg.table_urdf))[2] / 2
 
     env.scene.articulations["robot"] = env.robot
     env.scene.rigid_objects["table"] = env.table

@@ -97,6 +97,7 @@ reward:
 
   kuka_actions_penalty_scale: 0.03
   hand_actions_penalty_scale: 0.003
+  fingertip_distance_from_pad: false   # distance-delta from fingertip body origins
 
 # -----------------------------------------------------------------------------
 # 6) reset — initial-state distribution + goal sampling
@@ -114,6 +115,7 @@ reset:
   table_reset_z: 0.38
   table_reset_z_range: 0.01
   table_object_z_offset: 0.25
+  table_reset_xy: [0.0, 0.0]
 
   goal_sampling_type: delta           # "delta" | "absolute"
   delta_goal_distance: 0.1
@@ -121,6 +123,8 @@ reset:
   target_volume_mins: [-0.35, -0.2, 0.6]
   target_volume_maxs: [0.35, 0.2, 0.95]
   target_volume_region_scale: 1.0
+  use_goal_table_clearance: false   # off: goals may intersect the table
+  goal_table_clearance_m: 0.01
 
 # -----------------------------------------------------------------------------
 # 7) termination — end-of-episode conditions + tolerance curriculum

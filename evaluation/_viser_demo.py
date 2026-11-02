@@ -15,6 +15,7 @@ import sys
 import time
 import traceback
 from pathlib import Path
+from dataclasses import dataclass
 from typing import Dict, Optional, Tuple
 
 import numpy as np
@@ -27,27 +28,86 @@ sys.setrecursionlimit(max(sys.getrecursionlimit(), 10000))
 REPO_ROOT = Path(__file__).resolve().parent.parent
 ASSETS_DIR = REPO_ROOT / "assets" / "urdf" / "peg_in_hole"
 
-TABLE_Z = 0.38
-N_ACT = 29
-OBS_DIM = 140
 CONTROL_DT = 1.0 / 60.0
 
+# The Kuka + Sharpa's resting pose in the viewer (29 joints, canonical order). Other robots use
+# their RobotSpec's default arm pose (see load_viewer_robot).
 _ARM_DEFAULT = np.array([-1.571, 1.571, 0.0, 1.376, 0.0, 1.485, 1.308])
 _ARM_DEFAULT[1] -= np.deg2rad(10)
 _ARM_DEFAULT[3] += np.deg2rad(10)
-DEFAULT_DOF_POS = np.zeros(N_ACT)
+DEFAULT_DOF_POS = np.zeros(29)
 DEFAULT_DOF_POS[:7] = _ARM_DEFAULT
 
 GOAL_MODES = ["preInsertAndFinal", "finalGoalOnly"]
 DEFAULT_PROBLEM = "tight_insertion"
 
-HOLE_SCENE_Z = 0.15  # hole base Z in scene-local frame (= table top)
-
-# Target volume for random-goal sampling (matches PreciseAssemblyDynamicEnv.yaml)
-TARGET_VOLUME_MINS = [-0.35, -0.1, 0.6]
-TARGET_VOLUME_MAXS = [0.35, 0.2, 0.95]
 DEFAULT_INSERTION_SUCCESS_TOLERANCE = 0.01
 DEFAULT_RETRACT_SUCCESS_TOLERANCE = 0.005
+
+# Viewer geometry per task: the robot and table come from the task's YAML overlay, the robot's
+# joint names and default pose from isaacsimenvs/tasks/play/robots.py (Kit-free).
+DEFAULT_TASK = "Isaacsimenvs-PreciseAssembly-Direct-v0"
+TASK_YAMLS = {
+    DEFAULT_TASK: "PreciseAssembly.yaml",
+    "Isaacsimenvs-PreciseAssemblyFlexivWujiRight-Direct-v0": "PreciseAssemblyFlexivWujiRight.yaml",
+}
+
+
+@dataclass(frozen=True)
+class ViewerRobot:
+    """Everything the viewer draws that depends on the robot / its table setup."""
+
+    name: str
+    robot_urdf: Path
+    joint_names: Tuple[str, ...]          # canonical (policy) order, as the sim streams them
+    default_dof_pos: np.ndarray           # canonical order
+    table_dims: Tuple[float, float, float]
+    table_center: Tuple[float, float, float]  # env-local
+    target_volume_mins: Tuple[float, float, float]
+    target_volume_maxs: Tuple[float, float, float]
+
+
+def _load_robot_specs() -> dict:
+    """``robots.ROBOT_SPECS`` without importing isaacsimenvs (which pulls in Isaac Lab)."""
+    import importlib.util
+
+    path = REPO_ROOT / "isaacsimenvs" / "tasks" / "play" / "robots.py"
+    spec = importlib.util.spec_from_file_location("_p2p_robots", path)
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = mod
+    spec.loader.exec_module(mod)
+    return mod.ROBOT_SPECS
+
+
+def load_viewer_robot(task: str) -> ViewerRobot:
+    import xml.etree.ElementTree as ET
+
+    import yaml
+
+    if task not in TASK_YAMLS:
+        raise KeyError(f"no viewer geometry for task {task!r}; known: {sorted(TASK_YAMLS)}")
+    cfg = yaml.safe_load((REPO_ROOT / "isaacsimenvs" / "cfg" / "task" / TASK_YAMLS[task]).read_text())
+    spec = _load_robot_specs()[cfg.get("robot", "kuka_sharpa")]
+    if spec.name == "kuka_sharpa":
+        default = DEFAULT_DOF_POS.copy()  # the Kuka's viewer pose, as released
+    else:
+        default = np.zeros(spec.num_joints)
+        default[:7] = [spec.arm_default_joint_pos[n] for n in spec.arm_joint_names]
+    table_urdf = REPO_ROOT / cfg["assets"]["table_urdf"]
+    box = ET.parse(table_urdf).getroot().find("link/collision/geometry/box")
+    rs = cfg["reset"]
+    tx, ty = rs.get("table_reset_xy", (0.0, 0.0))
+    return ViewerRobot(
+        name=spec.name,
+        robot_urdf=REPO_ROOT / cfg["assets"]["robot_urdf"],
+        joint_names=tuple(spec.joint_names_canonical),
+        default_dof_pos=default,
+        table_dims=tuple(float(v) for v in box.get("size").split()),
+        table_center=(float(tx), float(ty), float(rs["table_reset_z"])),
+        target_volume_mins=tuple(rs["target_volume_mins"]),
+        target_volume_maxs=tuple(rs["target_volume_maxs"]),
+    )
+
 
 # Problems whose URDF visuals carry real materials (textured scan, multi-material
 # GLBs) and should be drawn with them. Every other problem keeps the flat-colour
@@ -238,6 +298,8 @@ class PegDynamicDemo:
         if not self.problem_names:
             raise ValueError("PROBLEM_REGISTRY is empty")
         self.policies = policies
+        # Subclasses set self.task before calling this __init__.
+        self.viewer_robot = load_viewer_robot(getattr(self, "task", DEFAULT_TASK))
         self.initial_policy = initial_policy if initial_policy in policies else next(iter(policies))
         if initial_problem in self.problem_names:
             self.problem_name = initial_problem
@@ -406,15 +468,15 @@ class PegDynamicDemo:
         self.server.scene.add_frame(
             "/robot", position=(0, 0.8, 0), wxyz=(1, 0, 0, 0), show_axes=False,
         )
-        self.robot = ViserUrdf(
-            self.server,
-            REPO_ROOT / "assets" / "urdf" / "kuka_sharpa_description"
-            / "iiwa14_left_sharpa_adjusted_restricted.urdf",
-            root_node_name="/robot",
+        vr = self.viewer_robot
+        self.robot = ViserUrdf(self.server, vr.robot_urdf, root_node_name="/robot")
+        # The sim streams joints in the policy's canonical order; ViserUrdf wants its own.
+        self._viser_from_canon = np.array(
+            [vr.joint_names.index(n) for n in self.robot.get_actuated_joint_names()]
         )
-        self.robot.update_cfg(DEFAULT_DOF_POS)
+        self.set_robot_joints(vr.default_dof_pos)
 
-        self._table_frame_default_pos = (0.0, 0.0, TABLE_Z)
+        self._table_frame_default_pos = vr.table_center
         self._table_frame_default_wxyz = (1.0, 0.0, 0.0, 0.0)
         self._table_frame = self.server.scene.add_frame(
             "/table",
@@ -424,12 +486,15 @@ class PegDynamicDemo:
         )
         # Base table dims = the URDF box (X, Y, Z) before any scale variants.
         # Stored so subclasses can re-issue the box with scaled dimensions.
-        self._table_base_dims: tuple[float, float, float] = (0.475, 0.4, 0.3)
+        self._table_base_dims: tuple[float, float, float] = self.viewer_robot.table_dims
         self._table_wood = self.server.scene.add_box(
             "/table/wood", color=(180, 130, 70),
             dimensions=self._table_base_dims, position=(0, 0, 0),
             side="double", opacity=0.9,
         )
+
+    def set_robot_joints(self, joint_pos_canonical) -> None:
+        self.robot.update_cfg(np.asarray(joint_pos_canonical)[self._viser_from_canon])
 
     def _update_table_viz(
         self,
@@ -464,7 +529,7 @@ class PegDynamicDemo:
         """Move the ``/table`` frame to the displayed env's actual table pose.
 
         ``pos_local`` is the env-local position (world - env_origin). The
-        TABLE_Z offset is already baked into the URDF box visual position
+        table height offset is already baked into the URDF box visual position
         (z=0.15), so the frame z should be the table's actual world z minus
         the box-half-height inherent in ``_table_base_dims[2] / 2``; in
         practice the sim publishes ``root_pos_w`` at the center of the box,
@@ -550,7 +615,12 @@ class PegDynamicDemo:
         self._dyn.append(self._goal_viz)
 
         self._hole_frame = self.server.scene.add_frame(
-            "/hole", position=(0, 0, TABLE_Z + HOLE_SCENE_Z),
+            "/hole",
+            position=(
+                self.viewer_robot.table_center[0],
+                self.viewer_robot.table_center[1],
+                self.viewer_robot.table_center[2] + self.viewer_robot.table_dims[2] / 2,
+            ),
             wxyz=(1, 0, 0, 0), show_axes=False,
         )
         self._dyn.append(self._hole_frame)
@@ -661,8 +731,8 @@ class PegDynamicDemo:
     def _toggle_target_volume(self):
         show = self._cb_target_vol.value
         if show and self._target_vol_box is None:
-            tv_min = np.array(TARGET_VOLUME_MINS)
-            tv_max = np.array(TARGET_VOLUME_MAXS)
+            tv_min = np.array(self.viewer_robot.target_volume_mins)
+            tv_max = np.array(self.viewer_robot.target_volume_maxs)
             center = (tv_min + tv_max) / 2
             dims = tv_max - tv_min
             self._target_vol_box = self.server.scene.add_box(
@@ -745,7 +815,7 @@ class PegDynamicDemo:
 
     def _update_viz(self, state_tuple):
         joint_pos, obj_pose, goal_pose = state_tuple[0], state_tuple[1], state_tuple[2]
-        self.robot.update_cfg(joint_pos)
+        self.set_robot_joints(joint_pos)
 
         if self._obj_frame is not None:
             self._obj_frame.position = tuple(obj_pose[:3])

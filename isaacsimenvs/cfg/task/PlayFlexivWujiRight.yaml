@@ -1,0 +1,192 @@
+# PlayFlexivWujiRight — the Play task on a Flexiv Rizon 4s + right Wuji Hand 2 with human-like
+# finger joint limits.
+#
+# A FULL COPY of Play.yaml: the overlay loader reads one file with no inheritance.
+#
+# Intentional differences from Play.yaml:
+#   * `robot` — selects robots.FLEXIV_WUJI_RIGHT_HUMAN_LIKE (gains, palm/fingertip bodies, joint order)
+#   * `action_space` — 27 (7 arm + 20 hand) instead of 29; PlayEnv recomputes it from the robot
+#   * `assets.robot_urdf`, `assets.table_urdf`, `reset.table_*`, `reset.target_volume_*`,
+#     `reset.use_goal_table_clearance` — the real setup's robot and table
+#   * `reward.fingertip_distance_from_pad` — measured from the fingertip pads
+robot: flexiv_wuji_right_human_like
+
+# -----------------------------------------------------------------------------
+# DirectRLEnvCfg top-level required fields
+# -----------------------------------------------------------------------------
+decimation: 2
+episode_length_s: 10.0
+action_space: 27
+# observation_space / state_space are computed in PlayEnv.__init__ from
+# obs.obs_list / obs.state_list (see Phase D). Configclass defaults (140/140)
+# act only as transient placeholders before __init__ overwrites them.
+
+# -----------------------------------------------------------------------------
+# 1) sim — SimulationCfg (60 Hz policy control, 120 Hz physics)
+# -----------------------------------------------------------------------------
+sim:
+  dt: 0.00833333333   # 1/120
+  render_interval: 2
+  gravity: [0.0, 0.0, -9.81]
+  physx:
+    solver_type: 1                     # 1 = TGS (matches legacy)
+    min_position_iteration_count: 8
+    max_position_iteration_count: 8
+    min_velocity_iteration_count: 0
+    max_velocity_iteration_count: 0
+    bounce_threshold_velocity: 0.2
+    friction_offset_threshold: 0.04
+    friction_correlation_distance: 0.025
+
+# -----------------------------------------------------------------------------
+# 2) scene — plain InteractiveSceneCfg (Isaac Lab rejects unknown scene fields,
+#    so asset metadata lives under `assets:` below).
+# -----------------------------------------------------------------------------
+scene:
+  num_envs: 8192
+  env_spacing: 1.2
+  # Both must be false for MultiUsdFileCfg to spawn per-env distinct
+  # handle_head USDs: replicate_physics=false makes PhysX parse each env
+  # as its own subtree; clone_in_fabric=false makes the cloner land env
+  # prims in the USD stage (not just Fabric), so the multi-asset
+  # spawner's find_matching_prim_paths sees env_1..env_{N-1}.
+  replicate_physics: false
+  clone_in_fabric: false
+
+# -----------------------------------------------------------------------------
+# 3) assets — URDFs, procedural-generation knobs, static per-material frictions
+# -----------------------------------------------------------------------------
+assets:
+  robot_urdf: "assets/urdf/flexiv_wuji/rizon4s_right_wuji_human_like_joint_limits.urdf"
+  table_urdf: "assets/urdf/table_narrow_flexiv.urdf"
+
+  object_name: "handle_head_primitives"
+  handle_head_types: ["hammer", "screwdriver", "marker", "spatula", "eraser", "brush"]
+  num_assets_per_type: 100
+
+  modify_asset_frictions: true
+  robot_friction: 0.5
+  finger_tip_friction: 1.5
+  object_friction: 0.5
+  table_friction: 0.5
+
+# -----------------------------------------------------------------------------
+# 3) obs — asymmetric actor-critic obs layout
+# -----------------------------------------------------------------------------
+obs:
+  state_list: [joint_pos, joint_vel, prev_action_targets, palm_pos, palm_rot, palm_vel,
+               object_rot, object_vel, fingertip_pos_rel_palm, keypoints_rel_palm,
+               keypoints_rel_goal, object_scales, closest_keypoint_max_dist,
+               closest_fingertip_dist, lifted_object, progress, successes, reward]
+  obs_list: [joint_pos, joint_vel, prev_action_targets, palm_pos, palm_rot,
+             object_rot, fingertip_pos_rel_palm, keypoints_rel_palm,
+             keypoints_rel_goal, object_scales]
+  clamp_abs_observations: 10.0
+
+# -----------------------------------------------------------------------------
+# 4) action — moving-average smoothing + speed/force scales
+# -----------------------------------------------------------------------------
+action:
+  arm_moving_average: 0.1
+  hand_moving_average: 0.1
+  dof_speed_scale: 1.5
+
+# -----------------------------------------------------------------------------
+# 5) reward — keypoint + lifting + distance-delta + reach-goal + action penalties
+# -----------------------------------------------------------------------------
+reward:
+  keypoint_rew_scale: 200.0
+  keypoint_scale: 1.5
+  object_base_size: 0.04
+  fixed_size: [0.141, 0.03025, 0.0271]
+  fixed_size_keypoint_reward: true
+
+  lifting_rew_scale: 20.0
+  lifting_bonus: 300.0
+  lifting_bonus_threshold: 0.15
+
+  distance_delta_rew_scale: 50.0
+  reach_goal_bonus: 1000.0
+
+  kuka_actions_penalty_scale: 0.03
+  hand_actions_penalty_scale: 0.003
+  fingertip_distance_from_pad: true    # distance-delta from the fingertip pads
+
+# -----------------------------------------------------------------------------
+# 6) reset — initial-state distribution + goal sampling
+# -----------------------------------------------------------------------------
+reset:
+  reset_position_noise_x: 0.1
+  reset_position_noise_y: 0.1
+  reset_position_noise_z: 0.02
+  fixed_start_pose: null
+
+  reset_dof_pos_random_interval_arm: 0.1
+  reset_dof_pos_random_interval_fingers: 0.1
+  reset_dof_vel_random_interval: 0.5
+
+  # The real setup's table, measured from the robot frame (robot root at (0, 0.8, 0)): top 0.28 m
+  # above it, near side 0.31 m in front. The 4 cm slab (table_narrow_flexiv.urdf) is centred at
+  # y = 0.8 - 0.31 - 0.4/2 = 0.29, z = 0.28 - 0.02 = 0.26. Objects still start 0.10 m above the
+  # top, and the goal volume keeps Play's place relative to the table top centre, but for y_min,
+  # taken out to 0 (0.49 m past the table's near side).
+  table_reset_z: 0.26
+  table_reset_z_range: 0.01
+  table_object_z_offset: 0.12
+  table_reset_xy: [0.0, 0.29]
+
+  goal_sampling_type: delta           # "delta" | "absolute"
+  delta_goal_distance: 0.1
+  delta_rotation_degrees: 90.0
+  target_volume_mins: [-0.35, 0.0, 0.35]
+  target_volume_maxs: [0.35, 0.49, 0.7]
+  target_volume_region_scale: 1.0
+  use_goal_table_clearance: true    # goal object kept goal_table_clearance_m above the table top
+  goal_table_clearance_m: 0.01
+
+# -----------------------------------------------------------------------------
+# 7) termination — end-of-episode conditions + tolerance curriculum
+# -----------------------------------------------------------------------------
+termination:
+  episode_length: 600                 # policy steps (600 * 2 * 1/120 = 10s)
+  success_tolerance: 0.075            # curriculum start
+  target_success_tolerance: 0.01      # curriculum floor
+  eval_success_tolerance: null
+  success_steps: 10
+  max_consecutive_successes: 50
+  force_consecutive_near_goal_steps: false
+  tolerance_curriculum_increment: 0.9
+  tolerance_curriculum_interval: 3000
+
+# -----------------------------------------------------------------------------
+# 8) domain_randomization — sim2real essentials (delays, noise, impulses)
+# -----------------------------------------------------------------------------
+domain_randomization:
+  # obs / action latency
+  use_obs_delay: true
+  obs_delay_max: 3
+  use_action_delay: true
+  action_delay_max: 3
+
+  # object state delay + noise
+  use_object_state_delay_noise: true
+  object_state_delay_max: 10
+  object_state_xyz_noise_std: 0.01
+  object_state_rotation_noise_degrees: 5.0
+  object_scale_noise_multiplier_range: [1.0, 1.0]
+
+  # per-step obs noise
+  joint_velocity_obs_noise_std: 0.1
+
+  # random force/torque impulses
+  force_scale: 20.0
+  force_prob_range: [0.001, 0.1]
+  force_decay: 0.0
+  force_decay_interval: 0.08
+  force_only_when_lifted: true
+
+  torque_scale: 2.0
+  torque_prob_range: [0.001, 0.1]
+  torque_decay: 0.0
+  torque_decay_interval: 0.08
+  torque_only_when_lifted: true

@@ -203,13 +203,20 @@ def object_urdf_text_for_env(env, env_id: int) -> str:
 
 
 def table_urdf_for_env(env, env_id: int) -> tuple[str, Path]:
-    """Return the table URDF text assigned to one env."""
+    """Return the table URDF text assigned to one env: its scaled variant if the task made them,
+    else the task's own ``assets.table_urdf``."""
 
     table_paths = getattr(env, "_table_urdf_paths", None)
     if table_paths:
         urdf_path = Path(table_paths[env_id % len(table_paths)])
         return urdf_path.read_text(encoding="utf-8"), urdf_path
-    return TABLE_URDF_PATH.read_text(encoding="utf-8"), TABLE_URDF_PATH
+    cfg_path = getattr(getattr(getattr(env, "cfg", None), "assets", None), "table_urdf", None)
+    urdf_path = TABLE_URDF_PATH
+    if cfg_path:
+        urdf_path = Path(cfg_path)
+        if not urdf_path.is_absolute():
+            urdf_path = REPO_ROOT / urdf_path
+    return urdf_path.read_text(encoding="utf-8"), urdf_path
 
 
 def table_urdf_text_for_env(env, env_id: int) -> str:
@@ -236,7 +243,8 @@ def capture_pose_viewer_frame(env, env_id: int) -> dict[str, Any]:
 
     if hasattr(env, "_perm_lab_to_canon"):
         joint_pos = env.robot.data.joint_pos[env_id, env._perm_lab_to_canon]
-        joint_names = list(JOINT_NAMES_CANONICAL)
+        spec = getattr(env, "robot_spec", None)
+        joint_names = list(spec.joint_names_canonical if spec else JOINT_NAMES_CANONICAL)
     else:
         joint_pos = env.robot.data.joint_pos[env_id]
         joint_names = list(env.robot.data.joint_names)
@@ -273,18 +281,20 @@ def build_pose_viewer_html(
     hole_urdf_path: Path | None = None,
     github_raw_base: str | None = None,
     url_check: str = "skip",
+    robot_urdf_relative_path: str = ROBOT_URDF_RELATIVE_PATH,
 ) -> str:
     """Build a self-contained-ish viewer HTML string from captured frames.
 
     Object and table URDFs are embedded.  The robot URDF is URL-backed because
-    the SHARPA hand references mesh files that the browser must fetch.
+    its hand references mesh files that the browser must fetch, so
+    ``robot_urdf_relative_path`` (repo-relative) and its meshes must be pushed.
     """
 
     if not frames:
         raise ValueError("Cannot build pose viewer from zero frames.")
 
     raw_base = _normalize_raw_base(github_raw_base)
-    robot_urdf_url = raw_base + ROBOT_URDF_RELATIVE_PATH
+    robot_urdf_url = raw_base + robot_urdf_relative_path
     _check_url(robot_urdf_url, url_check)
     if object_urdf_path is not None:
         object_urdf_text = _rewrite_embedded_urdf_mesh_urls(
@@ -478,6 +488,7 @@ class PlayPoseViewerWrapper(gym.Wrapper):
             hole_urdf_path=self._hole_urdf_path,
             github_raw_base=self.github_raw_base,
             url_check=self.url_check,
+            robot_urdf_relative_path=self.env.unwrapped.cfg.assets.robot_urdf,
         )
         html_path.write_text(html_text, encoding="utf-8")
         print(f"[pose_viewer] wrote {len(frames)} frames to {html_path}", flush=True)

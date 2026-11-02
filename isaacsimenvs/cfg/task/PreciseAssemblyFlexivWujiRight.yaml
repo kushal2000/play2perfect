@@ -1,0 +1,157 @@
+# PreciseAssemblyFlexivWujiRight — the precise-assembly tasks on a Flexiv Rizon 4s + right Wuji
+# Hand 2 with human-like finger joint limits, finetuned from the PlayFlexivWujiRight policy.
+#
+# A FULL COPY of PreciseAssembly.yaml: the overlay loader reads one file with no inheritance.
+#
+# Intentional differences from PreciseAssembly.yaml (all as in PlayFlexivWujiRight.yaml):
+#   * `robot`, `action_space` — the Flexiv + right Wuji (27 joints)
+#   * `assets.robot_urdf`, `assets.table_urdf`, `reset.table_*`, `reset.target_volume_*` — the
+#     real setup's robot and table; precise_assembly.hole_x/y_range are relative to the table centre
+#   * `reward.fingertip_distance_from_pad` — measured from the fingertip pads
+robot: flexiv_wuji_right_human_like
+
+decimation: 2
+episode_length_s: 10.0
+action_space: 27
+
+sim:
+  dt: 0.00833333333
+  render_interval: 2
+  gravity: [0.0, 0.0, -9.81]
+  physx:
+    solver_type: 1
+    min_position_iteration_count: 1
+    max_position_iteration_count: 192
+    min_velocity_iteration_count: 0
+    max_velocity_iteration_count: 1
+    bounce_threshold_velocity: 0.02
+    friction_offset_threshold: 0.01
+    friction_correlation_distance: 0.0005
+    gpu_found_lost_aggregate_pairs_capacity: 4194304
+    gpu_total_aggregate_pairs_capacity: 8388608
+    gpu_max_rigid_contact_count: 8388608
+    gpu_max_rigid_patch_count: 8388608
+    gpu_collision_stack_size: 2147483648
+
+scene:
+  num_envs: 8192
+  env_spacing: 1.2
+  replicate_physics: false
+  clone_in_fabric: false
+
+assets:
+  robot_urdf: "assets/urdf/flexiv_wuji/rizon4s_right_wuji_human_like_joint_limits.urdf"
+  table_urdf: "assets/urdf/table_narrow_flexiv.urdf"
+  object_name: "peg"
+  object_urdf: "assets/urdf/peg_in_hole/peg/peg.urdf"
+  receptive_urdf: "assets/urdf/peg_in_hole/holes/hole_tol0p5mm/hole_tol0p5mm.urdf"
+  object_scale: [6.25, 0.75, 0.5]
+  modify_asset_frictions: true
+  robot_friction: 0.5
+  finger_tip_friction: 1.5
+  object_friction: 0.5
+  table_friction: 0.5
+
+precise_assembly:
+  problem: "tight_insertion"
+  goal_mode: "preInsertAndFinal"
+  hole_x_range: [-0.1875, 0.1875]
+  hole_y_range: [-0.1, 0.1]
+  goal_xy_obs_noise: 0.002
+  goal_yaw_obs_noise_deg: 0.0
+  random_goal_fraction: 0.0
+  random_goal_max_successes: 5
+  random_goal_curriculum_success_threshold: 2.0
+  lift_bonus_fade_threshold: 2.0
+  insertion_success_tolerance: 0.01
+  enable_retract: true
+  retract_reward_scale: 1.0
+  retract_distance_threshold: 0.1
+  retract_success_bonus: 1000.0
+  retract_success_tolerance: 0.005
+
+obs:
+  state_list: [joint_pos, joint_vel, prev_action_targets, palm_pos, palm_rot, palm_vel,
+               object_rot, object_vel, fingertip_pos_rel_palm, keypoints_rel_palm,
+               keypoints_rel_goal, object_scales, closest_keypoint_max_dist,
+               closest_fingertip_dist, lifted_object, progress, successes, reward]
+  obs_list: [joint_pos, joint_vel, prev_action_targets, palm_pos, palm_rot,
+             object_rot, fingertip_pos_rel_palm, keypoints_rel_palm,
+             keypoints_rel_goal, object_scales]
+  clamp_abs_observations: 10.0
+
+action:
+  arm_moving_average: 0.1
+  hand_moving_average: 0.1
+  dof_speed_scale: 1.5
+
+reward:
+  keypoint_rew_scale: 200.0
+  keypoint_scale: 1.5
+  object_base_size: 0.04
+  fixed_size: [0.141, 0.03025, 0.0271]
+  fixed_size_keypoint_reward: true
+  lifting_rew_scale: 20.0
+  lifting_bonus: 300.0
+  lifting_bonus_threshold: 0.15
+  distance_delta_rew_scale: 50.0
+  reach_goal_bonus: 1000.0
+  kuka_actions_penalty_scale: 0.03
+  hand_actions_penalty_scale: 0.003
+  fingertip_distance_from_pad: true    # distance-delta from the fingertip pads
+
+reset:
+  reset_position_noise_x: 0.1
+  reset_position_noise_y: 0.1
+  reset_position_noise_z: 0.02
+  fixed_start_pose: null
+  reset_dof_pos_random_interval_arm: 0.1
+  reset_dof_pos_random_interval_fingers: 0.1
+  reset_dof_vel_random_interval: 0.5
+  # The real setup's table (see PlayFlexivWujiRight.yaml): top 0.28 m above the robot frame,
+  # centred at y = 0.29. Objects start 0.10 m above the top, as on the Kuka.
+  table_reset_z: 0.26
+  table_reset_z_range: 0.01
+  table_object_z_offset: 0.12
+  table_reset_xy: [0.0, 0.29]
+  goal_sampling_type: delta
+  delta_goal_distance: 0.1
+  delta_rotation_degrees: 90.0
+  target_volume_mins: [-0.35, 0.0, 0.35]
+  target_volume_maxs: [0.35, 0.49, 0.7]
+  target_volume_region_scale: 1.0
+  fixed_goal_pose: null
+
+termination:
+  episode_length: 600
+  success_tolerance: 0.075
+  target_success_tolerance: 0.01
+  eval_success_tolerance: null
+  success_steps: 10
+  max_consecutive_successes: 2
+  force_consecutive_near_goal_steps: false
+  tolerance_curriculum_increment: 0.9
+  tolerance_curriculum_interval: 3000
+  tolerance_curriculum_success_threshold: 3.0
+
+domain_randomization:
+  use_obs_delay: true
+  obs_delay_max: 3
+  use_action_delay: true
+  action_delay_max: 3
+  use_object_state_delay_noise: true
+  object_state_delay_max: 10
+  object_state_xyz_noise_std: 0.01
+  object_state_rotation_noise_degrees: 5.0
+  object_scale_noise_multiplier_range: [1.0, 1.0]
+  joint_velocity_obs_noise_std: 0.1
+  force_scale: 20.0
+  force_prob_range: [0.001, 0.1]
+  force_decay: 0.0
+  force_decay_interval: 0.08
+  force_only_when_lifted: true
+  torque_scale: 2.0
+  torque_prob_range: [0.001, 0.1]
+  torque_decay: 0.0
+  torque_decay_interval: 0.08
+  torque_only_when_lifted: true

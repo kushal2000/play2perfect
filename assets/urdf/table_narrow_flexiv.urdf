@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<!-- table_narrow.urdf as a 4 cm slab, for the Flexiv tasks (top placed 0.28 m above the robot frame). -->
+<robot name="box">
+  <link name="box">
+    <visual>
+      <material name="wood">
+        <color rgba="0.82 0.56 0.35 1.0"/>
+      </material>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <box size="0.475 0.4 0.04"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <box size="0.475 0.4 0.04"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="500"/>
+      <friction value="1.0"/>
+      <inertia ixx="1000.0" ixy="0.0" ixz="0.0" iyy="1000.0" iyz="0.0" izz="1000.0"/>
+    </inertial>
+  </link>
+</robot>

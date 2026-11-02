@@ -11,6 +11,7 @@ import torch
 from isaaclab.envs import DirectRLEnv
 
 from .play_env_cfg import PlayEnvCfg
+from .robots import get_robot_spec
 from .utils.action_utils import apply_action_pipeline, apply_wrench_dr
 from .utils.logging_utils import log_step_metrics
 from .utils.obs_utils import (
@@ -34,10 +35,13 @@ class PlayEnv(DirectRLEnv):
     def __init__(
         self, cfg: PlayEnvCfg, render_mode: str | None = None, **kwargs
     ) -> None:
-        # Override obs/state space from configured field lists before
+        self.robot_spec = get_robot_spec(cfg.robot)
+        # Override action/obs/state space from the robot and the configured field lists before
         # DirectRLEnv / rl_games observes the configclass.
-        cfg.observation_space = compute_obs_dim(cfg.obs.obs_list)
-        cfg.state_space = compute_obs_dim(cfg.obs.state_list)
+        n = self.robot_spec.num_joints
+        cfg.action_space = n
+        cfg.observation_space = compute_obs_dim(cfg.obs.obs_list, n)
+        cfg.state_space = compute_obs_dim(cfg.obs.state_list, n)
 
         super().__init__(cfg, render_mode, **kwargs)  # runs _setup_scene
         apply_physx_material_properties(self)

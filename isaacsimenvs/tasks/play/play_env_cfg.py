@@ -343,6 +343,12 @@ class RewardCfg:
     kuka_actions_penalty_scale: float = 0.03
     hand_actions_penalty_scale: float = 0.003
 
+    # Where the fingertip-to-object distance behind the distance-delta term is measured from.
+    # False (the released Kuka policies): each fingertip body's origin, at the last finger joint.
+    # True (the Flexiv + Wuji task): the pad point the policy observes, body +
+    # RobotSpec.fingertip_offset, as in SimToolReal's Isaac Gym env.
+    fingertip_distance_from_pad: bool = False
+
 
 # ----------------------------------------------------------------------------
 # reset (includes goal sampling — both fire on _reset_idx)
@@ -368,6 +374,8 @@ class ResetCfg:
     table_reset_z: float = 0.38
     table_reset_z_range: float = 0.01
     table_object_z_offset: float = 0.25
+    # Table centre in env XY; objects spawn around it (the Flexiv task moves it to its real setup).
+    table_reset_xy: tuple[float, float] = (0.0, 0.0)
     # Per-env XY position noise applied at reset (uniform half-widths in m).
     # Default (0, 0) keeps the table centered on the env origin (legacy behavior).
     table_reset_xy_range_m: tuple[float, float] = (0.0, 0.0)
@@ -382,6 +390,11 @@ class ResetCfg:
     target_volume_mins: tuple[float, float, float] = (-0.35, -0.2, 0.6)
     target_volume_maxs: tuple[float, float, float] = (0.35, 0.2, 0.95)
     target_volume_region_scale: float = 1.0
+    # When on, each sampled goal's z is raised (past target_volume_maxs if need be) until the
+    # object at the goal orientation is goal_table_clearance_m above the table top
+    # (utils/goal_table_clearance.py). Off leaves goals where the sampler puts them.
+    use_goal_table_clearance: bool = False
+    goal_table_clearance_m: float = 0.01
 
     # Debug only — when set, every reset writes this exact env-local pose
     # to GoalViz instead of sampling. Format: (x, y, z, qw, qx, qy, qz).
@@ -502,8 +515,15 @@ class DomainRandomizationCfg:
 # ----------------------------------------------------------------------------
 
 
-def _default_sim_cfg() -> SimulationCfg:
-    """60 Hz policy control / 120 Hz physics (matches legacy dt=1/60 + substeps=2)."""
+def _default_sim_cfg(gpu_max_rigid_patch_count: int | None = None) -> SimulationCfg:
+    """60 Hz policy control / 120 Hz physics (matches legacy dt=1/60 + substeps=2).
+
+    ``gpu_max_rigid_patch_count`` only sizes a PhysX buffer: Isaac Lab's default (163840) overflows
+    at 24576 envs with robot self-collision on, and PhysX then drops the contacts that do not fit.
+    """
+    physx_extra = {}
+    if gpu_max_rigid_patch_count is not None:
+        physx_extra["gpu_max_rigid_patch_count"] = int(gpu_max_rigid_patch_count)
     return SimulationCfg(
         dt=1.0 / 120.0,
         render_interval=2,
@@ -517,6 +537,7 @@ def _default_sim_cfg() -> SimulationCfg:
             bounce_threshold_velocity=0.2,
             friction_offset_threshold=0.04,
             friction_correlation_distance=0.025,
+            **physx_extra,
         ),
     )
 
@@ -578,9 +599,36 @@ class PlayEnvCfg(DirectRLEnvCfg):
     termination: TerminationCfg = TerminationCfg()
     domain_randomization: DomainRandomizationCfg = DomainRandomizationCfg()
 
+    # Robot embodiment, a key of robots.ROBOT_SPECS. Fixed per registered task; assets.robot_urdf
+    # must be its URDF. PlayEnv sets action_space (and the obs sizes) from it.
+    robot: str = "kuka_sharpa"
+    # Robot self-collision, minus robots.RobotSpec.self_collision_filter. Off for the Kuka (as its
+    # released policies were trained); on for the Flexiv + Wuji.
+    robot_self_collision: bool = False
+
+
+@configclass
+class PlayFlexivWujiRightEnvCfg(PlayEnvCfg):
+    """Play on a Flexiv Rizon 4s + right Wuji Hand 2 with human-like finger joint limits
+    (``Isaacsimenvs-PlayFlexivWujiRight-Direct-v0``).
+
+    The same task as ``PlayEnvCfg`` except the robot, robot self-collision (on), and the
+    real setup's table (``cfg/task/PlayFlexivWujiRight.yaml``).
+    """
+
+    robot: str = "flexiv_wuji_right_human_like"
+    robot_self_collision: bool = True
+    action_space: int = 27  # 7-DOF Rizon 4s + 20-DOF Wuji hand
+    sim: SimulationCfg = _default_sim_cfg(gpu_max_rigid_patch_count=2**21)
+    assets: AssetsCfg = AssetsCfg(
+        robot_urdf="assets/urdf/flexiv_wuji/rizon4s_right_wuji_human_like_joint_limits.urdf"
+    )
+    reward: RewardCfg = RewardCfg(fingertip_distance_from_pad=True)
+
 
 __all__ = [
     "PlayEnvCfg",
+    "PlayFlexivWujiRightEnvCfg",
     "AssetsCfg",
     "ObsCfg",
     "StudentObsCfg",

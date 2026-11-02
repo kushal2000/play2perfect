@@ -795,7 +795,7 @@ def _run_viewer(args) -> int:
             self._peak_force = 0.0
             self._md_stats.content = "**Stats:** No episodes yet"
 
-            self.robot.update_cfg(gym_eval.DEFAULT_DOF_POS)
+            self.set_robot_joints(self.viewer_robot.default_dof_pos)
             self._setup_scene_objects()
 
             worker_overrides = dict(self.extra_overrides)

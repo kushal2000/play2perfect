@@ -11,14 +11,8 @@ from isaaclab.utils.math import random_orientation
 
 from .action_utils import sample_log_uniform
 from .goal_sampling import sample_absolute_goal_pose, sample_delta_goal_pose
+from .goal_table_clearance import min_goal_z
 from .obs_utils import KEYPOINT_CORNERS, NUM_FINGERTIPS
-from .scene_utils import (
-    ARM_JOINT_REGEX,
-    FINGERTIP_BODY_REGEX,
-    HAND_JOINT_REGEX,
-    JOINT_NAMES_CANONICAL,
-    PALM_BODY_NAME,
-)
 
 def allocate_state_buffers(env) -> None:
     """Populate every per-env buffer + index cache used by the hooks.
@@ -31,29 +25,38 @@ def allocate_state_buffers(env) -> None:
     rew = env.cfg.reward
 
     # --- Joint/body id caches ---
-    env._arm_joint_ids = env.robot.find_joints(ARM_JOINT_REGEX)[0]      # 7
-    env._hand_joint_ids = env.robot.find_joints(HAND_JOINT_REGEX)[0]     # 22
-    env._palm_body_id = env.robot.find_bodies(PALM_BODY_NAME)[0][0]
-    env._fingertip_body_ids = env.robot.find_bodies(FINGERTIP_BODY_REGEX)[0]  # 5
+    spec = env.robot_spec
+    env._arm_joint_ids = env.robot.find_joints(spec.arm_joint_regex)[0]      # 7
+    env._hand_joint_ids = env.robot.find_joints(spec.hand_joint_regex)[0]
+    env._palm_body_id = env.robot.find_bodies(spec.palm_body_name)[0][0]
+    env._fingertip_body_ids = env.robot.find_bodies(spec.fingertip_body_regex)[0]  # 5
     assert len(env._fingertip_body_ids) == NUM_FINGERTIPS
 
     # Convert between Lab parser order and canonical policy order.
     lab_names = list(env.robot.data.joint_names)
-    assert set(lab_names) == set(JOINT_NAMES_CANONICAL)
+    canonical = spec.joint_names_canonical
+    assert set(lab_names) == set(canonical), (
+        f"robot {spec.name!r} expects joints {sorted(canonical)}, but "
+        f"{env.cfg.assets.robot_urdf} has {sorted(lab_names)}"
+    )
+    # action_utils slices the arm as Lab columns [:7] and the hand as [7:].
+    n_arm = len(spec.arm_joint_names)
+    assert list(env._arm_joint_ids) == list(range(n_arm)), env._arm_joint_ids
+    assert list(env._hand_joint_ids) == list(range(n_arm, len(lab_names))), env._hand_joint_ids
     env._perm_canon_to_lab = torch.tensor(
-        [JOINT_NAMES_CANONICAL.index(n) for n in lab_names],
+        [canonical.index(n) for n in lab_names],
         device=env.device, dtype=torch.long,
     )
     env._perm_lab_to_canon = torch.tensor(
-        [lab_names.index(n) for n in JOINT_NAMES_CANONICAL],
+        [lab_names.index(n) for n in canonical],
         device=env.device, dtype=torch.long,
     )
 
     limits = env.robot.data.joint_pos_limits  # (N, num_joints, 2), Lab order
 
     # Canonical-order limits for normalizing joint_pos observations.
-    env._joint_lower_canon = limits[0, :, 0][env._perm_lab_to_canon]  # (29,)
-    env._joint_upper_canon = limits[0, :, 1][env._perm_lab_to_canon]  # (29,)
+    env._joint_lower_canon = limits[0, :, 0][env._perm_lab_to_canon]  # (num_joints,)
+    env._joint_upper_canon = limits[0, :, 1][env._perm_lab_to_canon]  # (num_joints,)
 
     # Lab-order limits for action target clamping.
     env._arm_lower = limits[:, env._arm_joint_ids, 0]
@@ -239,6 +242,7 @@ def _reset_table_pose(env, env_ids: torch.Tensor) -> None:
     env._table_z_per_env[env_ids] = table_z
 
     pos_local = torch.zeros(n, 3, device=env.device)
+    pos_local[:, :2] = torch.as_tensor(cfg.table_reset_xy, device=env.device, dtype=torch.float32)
     pos_local[:, 2] = table_z
 
     # XY position noise — per-env independent uniform half-widths.
@@ -246,8 +250,8 @@ def _reset_table_pose(env, env_ids: torch.Tensor) -> None:
     if xy_range[0] > 0.0 or xy_range[1] > 0.0:
         rx = torch.empty(n, device=env.device).uniform_(-xy_range[0], xy_range[0])
         ry = torch.empty(n, device=env.device).uniform_(-xy_range[1], xy_range[1])
-        pos_local[:, 0] = rx
-        pos_local[:, 1] = ry
+        pos_local[:, 0] += rx
+        pos_local[:, 1] += ry
 
     # Yaw noise — sample uniform [-r, r] degrees, build a z-axis rotation quat.
     yaw_range_deg = float(cfg.table_reset_yaw_range_deg)
@@ -282,8 +286,8 @@ def _reset_object_pose(env, env_ids: torch.Tensor) -> None:
         noise = torch.empty(n, 3, device=env.device).uniform_(-1.0, 1.0)
         pos_local = torch.stack(
             (
-                noise[:, 0] * cfg.reset_position_noise_x,
-                noise[:, 1] * cfg.reset_position_noise_y,
+                cfg.table_reset_xy[0] + noise[:, 0] * cfg.reset_position_noise_x,
+                cfg.table_reset_xy[1] + noise[:, 1] * cfg.reset_position_noise_y,
                 env._table_z_per_env[env_ids]
                 + cfg.table_object_z_offset
                 + noise[:, 2] * cfg.reset_position_noise_z,
@@ -364,6 +368,18 @@ def _reset_goal_pose(env, env_ids: torch.Tensor, mode: str) -> None:
         )
     else:
         raise ValueError(f"unknown goal sampling mode: {mode}")
+
+    if cfg.use_goal_table_clearance:
+        # Lift the goal off the table: how far the object reaches below its origin depends on the
+        # goal orientation (_reset_table_pose has already set this reset's table height).
+        floor_z = min_goal_z(
+            new_quat,
+            env._object_collision_corners[env_ids],
+            env._table_z_per_env[env_ids] + env._table_half_height,
+            cfg.goal_table_clearance_m,
+        )
+        new_pos_local = new_pos_local.clone()
+        new_pos_local[:, 2] = torch.maximum(new_pos_local[:, 2], floor_z)
 
     pose = torch.cat([new_pos_local + env_origins, new_quat], dim=-1)
     env.goal_viz.write_root_pose_to_sim(pose, env_ids=env_ids)

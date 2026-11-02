@@ -31,9 +31,6 @@ from .precise_assembly_env_cfg import PreciseAssemblyEnvCfg, VALID_GOAL_MODES
 from .scene_utils import REPO_ROOT, setup_scene
 
 
-TABLE_HALF_HEIGHT = 0.15
-
-
 def _xyzw_to_wxyz(quat: torch.Tensor) -> torch.Tensor:
     return torch.cat([quat[:, 3:4], quat[:, 0:3]], dim=-1)
 
@@ -277,7 +274,6 @@ class PreciseAssemblyEnv(PlayEnv):
         cfg.assets.object_urdf = self._pih_object_urdf_abs
         cfg.assets.receptive_urdf = self._pih_receptive_urdf_abs
         cfg.assets.object_scale = self._pih_object_scale
-        cfg.assets.table_urdf = "assets/urdf/table_narrow.urdf"
 
         random_max = int(pih_cfg.random_goal_max_successes)
         if random_goal_fraction > 0.0:
@@ -319,7 +315,7 @@ class PreciseAssemblyEnv(PlayEnv):
             is_random_goal, random_max, insertion_max
         )
 
-        table_top_z = self._table_z_per_env[env_ids] + TABLE_HALF_HEIGHT
+        table_top_z = self._table_z_per_env[env_ids] + self._table_half_height
 
         # Object pose was already written by PlayEnv._reset_object_pose
         # (called from super()._reset_idx via reset_env_state). It honors
@@ -327,12 +323,15 @@ class PreciseAssemblyEnv(PlayEnv):
         # cfg.reset.reset_position_noise_x/y/z + random_orientation. We do not
         # override it here.
 
+        # hole_x_range / hole_y_range are relative to the table centre (reset.table_reset_xy):
+        # (0, 0) for the Kuka's table, the real setup's for the Flexiv's.
+        table_x, table_y = (float(v) for v in self.cfg.reset.table_reset_xy)
         hole_x_min, hole_x_max = (float(v) for v in pih_cfg.hole_x_range)
         hole_y_min, hole_y_max = (float(v) for v in pih_cfg.hole_y_range)
-        self.hole_pos[env_ids, 0] = torch.empty(n, device=self.device).uniform_(
+        self.hole_pos[env_ids, 0] = table_x + torch.empty(n, device=self.device).uniform_(
             hole_x_min, hole_x_max
         )
-        self.hole_pos[env_ids, 1] = torch.empty(n, device=self.device).uniform_(
+        self.hole_pos[env_ids, 1] = table_y + torch.empty(n, device=self.device).uniform_(
             hole_y_min, hole_y_max
         )
         self.hole_pos[env_ids, 2] = table_top_z + self._pih_hole_z_offset
@@ -654,7 +653,7 @@ class PreciseAssemblyEnv(PlayEnv):
             hand_far = self._curr_fingertip_distances.max(dim=-1).values > 1.5
 
         if pih_cfg.enable_dropped_on_table_term:
-            table_top_local = self._table_z_per_env + TABLE_HALF_HEIGHT
+            table_top_local = self._table_z_per_env + self._table_half_height
             mean_ft_dist = self._curr_fingertip_distances.mean(dim=-1)
             dropped = (
                 (object_z_local < table_top_local + pih_cfg.dropped_on_table_z_margin)
