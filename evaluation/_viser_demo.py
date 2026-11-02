@@ -471,7 +471,7 @@ class PegDynamicDemo:
             self._btn_stop.on_click(lambda _: self._cmd_stop())
 
         with self.server.gui.add_folder("Display", expand_by_default=True):
-            self._cb_keypoints = self.server.gui.add_checkbox("Show keypoints", initial_value=True)
+            self._cb_keypoints = self.server.gui.add_checkbox("Show keypoints", initial_value=False)
             self._cb_keypoints.on_update(lambda _: self._apply_keypoint_visibility())
             self._cb_goal = self.server.gui.add_checkbox("Show goal", initial_value=True)
             self._cb_goal.on_update(lambda _: self._apply_goal_visibility())
