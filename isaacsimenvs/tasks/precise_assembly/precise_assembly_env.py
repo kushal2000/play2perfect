@@ -194,7 +194,8 @@ class PreciseAssemblyEnv(PlayEnv):
             f"goals={self._num_total_insertion_goals} "
             f"(prelude={self._num_prelude_goals}, tail={self._num_insertion_goals}) "
             f"goal_mode={pih_cfg.goal_mode} "
-            f"random_goal_fraction={random_goal_fraction}",
+            f"random_goal_fraction={random_goal_fraction} "
+            f"insertion_success_tolerance={pih_cfg.insertion_success_tolerance}",
             flush=True,
         )
 
@@ -244,6 +245,12 @@ class PreciseAssemblyEnv(PlayEnv):
 
         self._pih_problem_name = problem_name
         self._pih_problem = problem
+        if pih_cfg.insertion_success_tolerance is None:
+            from evaluation.problems import default_insertion_success_tolerance
+
+            pih_cfg.insertion_success_tolerance = default_insertion_success_tolerance(
+                problem_name
+            )
         self._pih_object_urdf_abs = str(object_urdf)
         self._pih_receptive_urdf_abs = str(receptive_urdf)
         self._pih_object_scale = tuple(float(v) for v in object_spec.scale)

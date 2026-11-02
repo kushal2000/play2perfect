@@ -149,7 +149,7 @@ reset:
 # -----------------------------------------------------------------------------
 termination:
   episode_length: 600                 # policy steps (600 * 2 * 1/120 = 10s)
-  success_tolerance: 0.075            # curriculum start
+  success_tolerance: 0.02             # curriculum start
   target_success_tolerance: 0.01      # curriculum floor
   eval_success_tolerance: null
   success_steps: 10

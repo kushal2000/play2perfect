@@ -56,7 +56,9 @@ class PreciseAssemblyCfg:
     random_goal_curriculum_success_threshold: float = 2.0
     lift_bonus_fade_threshold: float = 2.0
 
-    insertion_success_tolerance: float = 0.01
+    # Insertion success tolerance (m, before keypoint_scale). None uses the
+    # problem's default (evaluation.problems: 0.01, screwing 0.005).
+    insertion_success_tolerance: float | None = None
 
     enable_retract: bool = True
     retract_reward_scale: float = 1.0

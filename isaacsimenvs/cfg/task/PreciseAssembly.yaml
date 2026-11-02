@@ -51,7 +51,7 @@ precise_assembly:
   random_goal_max_successes: 5
   random_goal_curriculum_success_threshold: 2.0
   lift_bonus_fade_threshold: 2.0
-  insertion_success_tolerance: 0.01
+  insertion_success_tolerance: null   # null = per-problem default (0.01; screwing 0.005)
   enable_retract: true
   retract_reward_scale: 1.0
   retract_distance_threshold: 0.1

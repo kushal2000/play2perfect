@@ -10,7 +10,7 @@ them. The registry is then filtered down to the problems released here
 
 from dataclasses import dataclass
 from math import sqrt
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 
 Pose7 = Tuple[float, float, float, float, float, float, float]
@@ -98,6 +98,10 @@ class Problem:
     # at this Z lift above the start pose (with pre-insert orientation), prepended
     # to the hole-frame insertion sequence. Only honored when goal_mode allows it.
     prelude_lift_offset: float = 0.0
+    # Insertion success tolerance (m, before keypoint_scale) for the pre-insert
+    # and final goals. None falls back to DEFAULT_INSERTION_SUCCESS_TOLERANCE;
+    # precise_assembly.insertion_success_tolerance overrides both when set.
+    insertion_success_tolerance: Optional[float] = None
 
     def __post_init__(self) -> None:
         poses = self._normalize_pose_sequence(self.insert_pose_rel_receptive)
@@ -168,3 +172,21 @@ _branded = {
 }
 PROBLEM_REGISTRY.clear()
 PROBLEM_REGISTRY.update(_branded)
+
+
+DEFAULT_INSERTION_SUCCESS_TOLERANCE = 0.01
+
+# Per-problem insertion tolerances that differ from the default.
+_INSERTION_SUCCESS_TOLERANCES = {
+    "screwing": 0.005,
+}
+for _name, _tol in _INSERTION_SUCCESS_TOLERANCES.items():
+    PROBLEM_REGISTRY[_name] = _dc.replace(
+        PROBLEM_REGISTRY[_name], insertion_success_tolerance=_tol
+    )
+
+
+def default_insertion_success_tolerance(problem_name: str) -> float:
+    """The problem's own insertion tolerance, or the global default."""
+    tol = PROBLEM_REGISTRY[problem_name].insertion_success_tolerance
+    return DEFAULT_INSERTION_SUCCESS_TOLERANCE if tol is None else float(tol)

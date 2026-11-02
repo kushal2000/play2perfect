@@ -214,9 +214,10 @@ def run_driver(args) -> int:
             "--rl-device", args.rl_device,
             "--sim-device", args.sim_device,
             "--goal-mode", args.goal_mode,
-            "--insertion-success-tolerance", str(args.insertion_success_tolerance),
             "--retract-success-tolerance", str(args.retract_success_tolerance),
         ]
+        if args.insertion_success_tolerance is not None:
+            cmd += ["--insertion-success-tolerance", str(args.insertion_success_tolerance)]
         env = os.environ.copy()
         env.setdefault("OMNI_KIT_ACCEPT_EULA", "YES")
         print(f"\n===== evaluating {problem} =====", flush=True)
@@ -262,7 +263,8 @@ def _build_parser() -> argparse.ArgumentParser:
                    help="Discard first episodes that end within this many steps as unstable "
                         "inits (object fell/ungraspable at reset → impossible trial).")
     p.add_argument("--goal-mode", default="preInsertAndFinal")
-    p.add_argument("--insertion-success-tolerance", type=float, default=0.01)
+    p.add_argument("--insertion-success-tolerance", type=float, default=None,
+                   help="default: the problem's own (0.01; screwing 0.005)")
     p.add_argument("--retract-success-tolerance", type=float, default=0.005)
     p.add_argument("--rl-device", default="cuda:0")
     p.add_argument("--sim-device", default="cuda:0")

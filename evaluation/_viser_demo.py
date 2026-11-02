@@ -404,6 +404,18 @@ class PegDynamicDemo:
 
     def _on_problem_change(self) -> None:
         self.policy_name = self._resolve_policy(self.task, self._dd_problem.value)
+        # Insertion tolerance follows the problem unless pinned on the command line.
+        if not hasattr(self, "_sl_insertion_tol"):  # still building the GUI
+            return
+        override = getattr(self, "_insertion_tol_override", None)
+        if override is not None:
+            self._sl_insertion_tol.value = float(override)
+        else:
+            from evaluation.problems import default_insertion_success_tolerance
+
+            self._sl_insertion_tol.value = default_insertion_success_tolerance(
+                self._dd_problem.value
+            )
         if self.policy_name is None:
             self._md_policy.content = f"**Policy:** none for {self.viewer_robot.name} / {self._dd_problem.value}"
         else:

@@ -433,7 +433,7 @@ class TerminationCfg:
 
     episode_length: int = 600  # steps (policy steps; 600 * decimation * dt = 10s)
 
-    success_tolerance: float = 0.075  # curriculum start
+    success_tolerance: float = 0.02  # curriculum start
     target_success_tolerance: float = 0.01  # curriculum floor
     eval_success_tolerance: float | None = None
 

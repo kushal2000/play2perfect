@@ -294,7 +294,7 @@ def _apply_env_overrides(
     problem: str,
     goal_mode: str,
     random_goal_fraction: float,
-    insertion_success_tolerance: float,
+    insertion_success_tolerance: float | None,
     retract_success_tolerance: float,
     num_envs: int,
     sim_device: str,
@@ -307,7 +307,8 @@ def _apply_env_overrides(
     cfg.precise_assembly.problem = problem
     cfg.precise_assembly.goal_mode = goal_mode
     cfg.precise_assembly.random_goal_fraction = float(random_goal_fraction)
-    cfg.precise_assembly.insertion_success_tolerance = float(insertion_success_tolerance)
+    if insertion_success_tolerance is not None:  # None: the problem's own default
+        cfg.precise_assembly.insertion_success_tolerance = float(insertion_success_tolerance)
     cfg.precise_assembly.retract_success_tolerance = float(retract_success_tolerance)
     if float(random_goal_fraction) > 0.0:
         cfg.termination.success_tolerance = DEFAULT_RANDOM_GOAL_SUCCESS_TOLERANCE
@@ -500,7 +501,7 @@ def sim_worker(
     problem: str,
     goal_mode: str,
     random_goal_fraction: float,
-    insertion_success_tolerance: float,
+    insertion_success_tolerance: float | None,
     retract_success_tolerance: float,
     num_envs: int,
     games: int,
@@ -667,7 +668,8 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--num-envs", type=int, default=1)
     parser.add_argument("--games", type=int, default=100000)
     parser.add_argument("--random-goal-fraction", type=float, default=0.0)
-    parser.add_argument("--insertion-success-tolerance", type=float, default=0.01)
+    parser.add_argument("--insertion-success-tolerance", type=float, default=None,
+                        help="default: the problem's own (0.01; screwing 0.005)")
     parser.add_argument("--retract-success-tolerance", type=float, default=0.005)
     parser.add_argument("--eval-success-tolerance", type=float, default=None)
     parser.add_argument("--sdf", action="store_true")
@@ -821,7 +823,8 @@ def _run_viewer(args) -> int:
             self.sdf = bool(args.sdf)
             self.keep_dr = bool(args.keep_dr)
             super().__init__(*demo_args, **demo_kwargs)
-            self._sl_insertion_tol.value = float(args.insertion_success_tolerance)
+            self._insertion_tol_override = args.insertion_success_tolerance
+            self._on_problem_change()
             self._sl_retract_tol.value = float(args.retract_success_tolerance)
 
         def _load_env(self):
