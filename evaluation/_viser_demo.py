@@ -289,7 +289,12 @@ class PegDynamicDemo:
                  extra_overrides: Optional[dict] = None,
                  initial_problem: Optional[str] = None,
                  object_urdf: Optional[str] = None,
-                 hole_urdf: Optional[str] = None):
+                 hole_urdf: Optional[str] = None,
+                 policy_tasks: Optional[Dict[str, str]] = None,
+                 policy_problems: Optional[Dict[str, str]] = None):
+        """``policy_tasks`` maps a policy name to the task (robot) it was trained on; policies
+        it omits use ``self.task``. With more than one task the GUI gets a Robot dropdown.
+        ``policy_problems`` maps a policy name to its problem (default: the name itself)."""
         if goal_mode not in GOAL_MODES:
             raise ValueError(f"goal_mode must be one of {GOAL_MODES}")
         if not policies:
@@ -298,9 +303,16 @@ class PegDynamicDemo:
         if not self.problem_names:
             raise ValueError("PROBLEM_REGISTRY is empty")
         self.policies = policies
-        # Subclasses set self.task before calling this __init__.
-        self.viewer_robot = load_viewer_robot(getattr(self, "task", DEFAULT_TASK))
+        # Subclasses may set self.task before calling this __init__.
+        default_task = getattr(self, "task", DEFAULT_TASK)
+        self.policy_tasks = {name: (policy_tasks or {}).get(name, default_task) for name in policies}
+        self.policy_problems = {name: (policy_problems or {}).get(name, name) for name in policies}
         self.initial_policy = initial_policy if initial_policy in policies else next(iter(policies))
+        self.task = self.policy_tasks[self.initial_policy]
+        self._viewer_robots = {
+            task: load_viewer_robot(task) for task in dict.fromkeys(self.policy_tasks.values())
+        }
+        self.viewer_robot = self._viewer_robots[self.task]
         if initial_problem in self.problem_names:
             self.problem_name = initial_problem
         elif DEFAULT_PROBLEM in self.problem_names:
@@ -378,11 +390,39 @@ class PegDynamicDemo:
             if object_scene is not None:
                 self._object_glb = object_scene.export(file_type="glb")
 
+    def _task_policy_names(self, task: str) -> list:
+        return [name for name, t in self.policy_tasks.items() if t == task]
+
+    def _resolve_policy(self, task: str, problem_name: str) -> Optional[str]:
+        """The policy is fixed by (robot, problem): the robot's policy for that problem, or its
+        only policy (e.g. a single --checkpoint-path); None if neither exists."""
+        names = self._task_policy_names(task)
+        for name in names:
+            if self.policy_problems[name] == problem_name:
+                return name
+        return names[0] if len(names) == 1 else None
+
     def _on_problem_change(self) -> None:
-        """Select the policy named after the chosen problem, if there is one."""
-        problem_name = self._dd_problem.value
-        if problem_name in self.policies:
-            self._dd_policy.value = problem_name
+        self.policy_name = self._resolve_policy(self.task, self._dd_problem.value)
+        if self.policy_name is None:
+            self._md_policy.content = f"**Policy:** none for {self.viewer_robot.name} / {self._dd_problem.value}"
+        else:
+            self._md_policy.content = f"**Policy:** `{self.policies[self.policy_name][1]}`"
+
+    def _on_robot_change(self) -> None:
+        """Swap the drawn robot/table and the policy; the next Load uses the new robot."""
+        task = next(t for t, vr in self._viewer_robots.items() if vr.name == self._dd_robot.value)
+        if task == self.task:
+            return
+        self._kill_subprocess()
+        self._clear_dynamic()
+        self.task = task
+        self.viewer_robot = self._viewer_robots[task]
+        self._build_robot_viz()
+        self._on_problem_change()
+        self._md_status.content = (
+            f"**Status:** Robot set to {self.viewer_robot.name}; press Load / reload env"
+        )
 
     def _build_gui(self):
         self.server.gui.add_markdown(
@@ -391,13 +431,17 @@ class PegDynamicDemo:
         )
 
         with self.server.gui.add_folder("Task Selection", expand_by_default=True):
+            if len(self._viewer_robots) > 1:
+                self._dd_robot = self.server.gui.add_dropdown(
+                    "Robot", options=[vr.name for vr in self._viewer_robots.values()],
+                    initial_value=self.viewer_robot.name,
+                )
+                self._dd_robot.on_update(lambda _: self._on_robot_change())
             self._dd_problem = self.server.gui.add_dropdown(
                 "Problem", options=self.problem_names, initial_value=self.problem_name,
             )
-            self._dd_policy = self.server.gui.add_dropdown(
-                "Policy", options=list(self.policies.keys()),
-                initial_value=self.initial_policy,
-            )
+            self._md_policy = self.server.gui.add_markdown("**Policy:** --")
+            self._on_problem_change()
             self._dd_problem.on_update(lambda _: self._on_problem_change())
             self._dd_goal_mode = self.server.gui.add_dropdown(
                 "Goal mode", options=GOAL_MODES, initial_value=self.goal_mode,
@@ -468,7 +512,21 @@ class PegDynamicDemo:
         self.server.scene.add_frame(
             "/robot", position=(0, 0.8, 0), wxyz=(1, 0, 0, 0), show_axes=False,
         )
+        self._table_frame_default_wxyz = (1.0, 0.0, 0.0, 0.0)
+        self._table_frame = self.server.scene.add_frame(
+            "/table",
+            position=self.viewer_robot.table_center,
+            wxyz=self._table_frame_default_wxyz,
+            show_axes=False,
+        )
+        self._table_wood = None
+        self._build_robot_viz()
+
+    def _build_robot_viz(self):
+        """(Re)draw everything that depends on ``self.viewer_robot``: robot, table, target volume."""
         vr = self.viewer_robot
+        if self.robot is not None:
+            self.robot.remove()
         self.robot = ViserUrdf(self.server, vr.robot_urdf, root_node_name="/robot")
         # The sim streams joints in the policy's canonical order; ViserUrdf wants its own.
         self._viser_from_canon = np.array(
@@ -477,21 +535,22 @@ class PegDynamicDemo:
         self.set_robot_joints(vr.default_dof_pos)
 
         self._table_frame_default_pos = vr.table_center
-        self._table_frame_default_wxyz = (1.0, 0.0, 0.0, 0.0)
-        self._table_frame = self.server.scene.add_frame(
-            "/table",
-            position=self._table_frame_default_pos,
-            wxyz=self._table_frame_default_wxyz,
-            show_axes=False,
-        )
+        self._table_frame.position = vr.table_center
+        self._table_frame.wxyz = self._table_frame_default_wxyz
         # Base table dims = the URDF box (X, Y, Z) before any scale variants.
         # Stored so subclasses can re-issue the box with scaled dimensions.
-        self._table_base_dims: tuple[float, float, float] = self.viewer_robot.table_dims
+        self._table_base_dims: tuple[float, float, float] = vr.table_dims
+        if self._table_wood is not None:
+            self._table_wood.remove()
         self._table_wood = self.server.scene.add_box(
             "/table/wood", color=(180, 130, 70),
             dimensions=self._table_base_dims, position=(0, 0, 0),
             side="double", opacity=0.9,
         )
+        if self._target_vol_box is not None:
+            self._target_vol_box.remove()
+            self._target_vol_box = None
+            self._toggle_target_volume()
 
     def set_robot_joints(self, joint_pos_canonical) -> None:
         self.robot.update_cfg(np.asarray(joint_pos_canonical)[self._viser_from_canon])

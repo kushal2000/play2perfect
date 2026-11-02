@@ -71,8 +71,11 @@ Isaac Lab setup (Python 3.11, `.venv_isaacsim`).
 ### 1. Download checkpoints
 
 ```bash
-# Stage-1 play policy + the finetuned assembly policies
+# Stage-1 play policy + the finetuned assembly policies (KUKA iiwa 14 + Sharpa hand)
 python download_checkpoints.py
+
+# The same for the Flexiv Rizon 4s + right Wuji Hand 2 (no screwing policy yet)
+python download_checkpoints.py --robot flexiv_wuji_right_human_like
 ```
 
 ### 2. Interactive evaluation (viser)
@@ -86,6 +89,10 @@ python evaluation/eval_isaacsim.py \
 
 # ...or load all downloaded policies and switch between them in the GUI
 python evaluation/eval_isaacsim.py --policies-dir pretrained_assembly --port 8044
+
+# With both robots' checkpoints downloaded, no policy args gives a Robot dropdown too;
+# the policy is fixed by the chosen robot and problem
+python evaluation/eval_isaacsim.py --port 8044
 ```
 
 Open `http://localhost:8044` in a browser to watch the policy roll out the insertion.

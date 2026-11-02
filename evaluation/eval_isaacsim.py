@@ -26,7 +26,7 @@ import subprocess
 import sys
 import time
 import traceback
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from multiprocessing.connection import Client, Listener
 from pathlib import Path
 from typing import Iterable
@@ -38,6 +38,15 @@ if str(REPO_ROOT) not in sys.path:
 DEFAULT_TASK = "Isaacsimenvs-PreciseAssembly-Direct-v0"
 DEFAULT_AGENT = "rl_games_sapg_cfg_entry_point"
 DEFAULT_PROBLEM = "tight_insertion"
+# Robot -> precise-assembly task, and the directory its per-problem checkpoints live in.
+ROBOT_TASKS = {
+    "kuka_sharpa": DEFAULT_TASK,
+    "flexiv_wuji_right_human_like": "Isaacsimenvs-PreciseAssemblyFlexivWujiRight-Direct-v0",
+}
+DEFAULT_ROBOT_POLICY_DIRS = {
+    "kuka_sharpa": "pretrained_assembly",
+    "flexiv_wuji_right_human_like": "pretrained_assembly_flexiv_wuji",
+}
 DEFAULT_RANDOM_GOAL_SUCCESS_TOLERANCE = 0.01
 GOAL_MODES = ("preInsertAndFinal", "finalGoalOnly")
 CONTROL_DT = 1.0 / 60.0
@@ -88,6 +97,7 @@ class PolicySpec:
     checkpoint: Path
     config: Path | None
     metadata: dict
+    task: str = DEFAULT_TASK
 
     @property
     def problem(self) -> str | None:
@@ -95,6 +105,11 @@ class PolicySpec:
         if not problem or str(problem) == "pretrained_policy":
             return None
         return str(problem)
+
+    @property
+    def dir_name(self) -> str:
+        """The policy's subdir name (``pretrained_assembly/<problem>/`` names it after its problem)."""
+        return self.checkpoint.parent.name
 
 
 class PopenAdapter:
@@ -633,7 +648,16 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--task", default=DEFAULT_TASK)
     parser.add_argument("--agent", default=DEFAULT_AGENT)
     parser.add_argument("--python", default=None, help="Python executable for the Isaac Sim worker.")
-    parser.add_argument("--policies-dir", default=None)
+    parser.add_argument("--policies-dir", default=None, help="Policies for --task (one robot).")
+    parser.add_argument(
+        "--robot-policies",
+        nargs="+",
+        default=None,
+        metavar="ROBOT=DIR",
+        help=f"Per-robot policy dirs (robots: {', '.join(ROBOT_TASKS)}); a Robot dropdown "
+        "switches between them. Default, with no policy args: whichever of "
+        f"{', '.join(DEFAULT_ROBOT_POLICY_DIRS.values())} exist.",
+    )
     parser.add_argument("--policies", nargs="+", default=None)
     parser.add_argument("--policy", default=None, help="Alias for --initial-policy.")
     parser.add_argument("--initial-policy", default=None)
@@ -672,17 +696,58 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _robot_policy_dirs(args) -> dict[str, Path] | None:
+    """Robot -> policy dir for the multi-robot viewer, or None for the single-task modes."""
+    if args.robot_policies:
+        dirs = {}
+        for item in args.robot_policies:
+            robot, sep, path = item.partition("=")
+            if not sep or robot not in ROBOT_TASKS:
+                raise ValueError(f"--robot-policies wants ROBOT=DIR with ROBOT in {sorted(ROBOT_TASKS)}; got {item!r}")
+            dirs[robot] = _resolve_path(path)
+        return dirs
+    if args.policies_dir or args.checkpoint_path:
+        return None
+    dirs = {
+        robot: REPO_ROOT / rel
+        for robot, rel in DEFAULT_ROBOT_POLICY_DIRS.items()
+        if (REPO_ROOT / rel).is_dir()
+    }
+    return dirs if len(dirs) > 1 else None
+
+
 def _collect_policies(args) -> tuple[dict[str, PolicySpec], PolicySpec | None]:
+    selected_policy = None
+    policies: dict[str, PolicySpec] = {}
+    robot_dirs = _robot_policy_dirs(args)
+    if robot_dirs is not None:
+        for robot, robot_dir in robot_dirs.items():
+            if not robot_dir.is_dir():
+                raise FileNotFoundError(f"policies dir not found: {robot_dir}")
+            for name, spec in discover_policies(robot_dir).items():
+                key = f"{robot}/{name}"
+                policies[key] = replace(spec, name=key, task=ROBOT_TASKS[robot])
+        if args.policies:
+            keep = set(args.policies)
+            policies = {name: spec for name, spec in policies.items() if name in keep}
+        if not policies:
+            raise FileNotFoundError(f"no policy subdirs with model.pth in {sorted(map(str, robot_dirs.values()))}")
+        initial = args.initial_policy or args.policy or next(
+            (name for name in policies if name.endswith(f"/{DEFAULT_PROBLEM}")), None
+        )
+        return policies, _choose_policy(policies, initial)
+
     policies_dir = _resolve_path(args.policies_dir) if args.policies_dir else None
     if policies_dir is None and args.checkpoint_path is None:
         policies_dir = _default_policies_dir()
 
-    selected_policy = None
-    policies: dict[str, PolicySpec] = {}
     if policies_dir is not None:
         if not policies_dir.is_dir():
             raise FileNotFoundError(f"policies dir not found: {policies_dir}")
-        policies = discover_policies(policies_dir)
+        policies = {
+            name: replace(spec, task=args.task)
+            for name, spec in discover_policies(policies_dir).items()
+        }
         if args.policies:
             keep = set(args.policies)
             policies = {name: spec for name, spec in policies.items() if name in keep}
@@ -694,7 +759,7 @@ def _collect_policies(args) -> tuple[dict[str, PolicySpec], PolicySpec | None]:
     elif args.checkpoint_path is not None:
         checkpoint = _resolve_path(args.checkpoint_path)
         name = checkpoint.parent.name or "policy"
-        spec = PolicySpec(name=name, checkpoint=checkpoint, config=None, metadata={})
+        spec = PolicySpec(name=name, checkpoint=checkpoint, config=None, metadata={}, task=args.task)
         policies[name] = spec
         selected_policy = spec
     return policies, selected_policy
@@ -708,8 +773,12 @@ def _run_viewer(args) -> int:
         if not policies:
             print("No --policies-dir supplied and no hardware rollout policy dir found.")
             return 1
-        policy_dir = Path(args.policies_dir) if args.policies_dir else _default_policies_dir()
-        print(f"Policies in {policy_dir}:")
+        robot_dirs = _robot_policy_dirs(args)
+        if robot_dirs is not None:
+            print("Policies in " + ", ".join(f"{r}={d}" for r, d in robot_dirs.items()) + ":")
+        else:
+            policy_dir = Path(args.policies_dir) if args.policies_dir else _default_policies_dir()
+            print(f"Policies in {policy_dir}:")
         for line in _iter_policy_lines(policies[name] for name in sorted(policies)):
             print("  " + line)
         return 0
@@ -722,7 +791,7 @@ def _run_viewer(args) -> int:
 
     # pretrained_assembly/<problem>/ subdirs are named after their problem.
     policy_problem = selected_policy.problem or (
-        selected_policy.name if selected_policy.name in PROBLEM_REGISTRY else None
+        selected_policy.dir_name if selected_policy.dir_name in PROBLEM_REGISTRY else None
     )
     initial_problem = args.problem or policy_problem or DEFAULT_PROBLEM
     extra_overrides = {
@@ -761,7 +830,12 @@ def _run_viewer(args) -> int:
             rgf = self._sl_rgf.value
             insertion_tol = float(self._sl_insertion_tol.value)
             retract_tol = float(self._sl_retract_tol.value)
-            policy_name = self._dd_policy.value
+            policy_name = self.policy_name
+            if policy_name is None:
+                self._md_status.content = (
+                    f"**Status:** No policy for {self.viewer_robot.name} / {problem_name}"
+                )
+                return
             _config_path, checkpoint_path = self.policies[policy_name]
 
             try:
@@ -897,6 +971,7 @@ def _run_viewer(args) -> int:
     if args.dry_run:
         print(f"[eval_isaacsim] worker python: {args.python or _default_isaacsim_python()}")
         print(f"[eval_isaacsim] selected policy: {selected_policy.name}")
+        print(f"[eval_isaacsim] task: {selected_policy.task}")
         print(f"[eval_isaacsim] checkpoint: {selected_policy.checkpoint}")
         print(f"[eval_isaacsim] initial problem: {initial_problem}")
         print(f"[eval_isaacsim] port: {args.port}")
@@ -911,6 +986,8 @@ def _run_viewer(args) -> int:
         initial_policy=selected_policy.name,
         extra_overrides=extra_overrides,
         initial_problem=initial_problem,
+        policy_tasks={name: spec.task for name, spec in policies.items()},
+        policy_problems={name: spec.problem or spec.dir_name for name, spec in policies.items()},
     ).run()
     return 0
 
