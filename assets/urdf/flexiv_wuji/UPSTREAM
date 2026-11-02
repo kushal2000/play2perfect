@@ -1,2 +1,14 @@
-https://github.com/flexivrobotics/flexiv_description.git 8b8452105c5faf088f456db18b0e2581b16fc630
-https://github.com/wuji-technology/wuji-description.git b13f7d52b23cb79e35357303c72b7f61f1d2fda2
+Third-party robot description files, vendored unmodified at these commits:
+
+flexiv_description/  Flexiv Rizon 4s meshes
+  https://github.com/flexivrobotics/flexiv_description.git 8b8452105c5faf088f456db18b0e2581b16fc630
+  Apache License 2.0 (flexiv_description/LICENSE); upstream ships no NOTICE file.
+
+wuji_hand2/          Wuji Hand 2 meshes
+  https://github.com/wuji-technology/wuji-description.git b13f7d52b23cb79e35357303c72b7f61f1d2fda2
+  MIT License, Copyright (c) 2025 Wuji Technology (wuji_hand2/LICENSE).
+
+rizon4s_right_wuji_human_like_joint_limits.urdf is a modified, combined
+derivative of the URDFs in both repositories above (right Wuji Hand 2 mounted
+on the Rizon 4s flange, with human-like hand joint limits), and is distributed
+under the same licenses.
