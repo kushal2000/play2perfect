@@ -10,7 +10,7 @@ Examples:
     # Single checkpoint for one problem
     python evaluation/eval_isaacsim.py \
         --checkpoint-path pretrained_assembly/tight_insertion/model.pth \
-        --problem tight_insertion --port 8044
+        --problem tight_insertion --port 8080
 
     # All downloaded policies (a GUI dropdown switches between them)
     python evaluation/eval_isaacsim.py --policies-dir pretrained_assembly
@@ -644,7 +644,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("--port", type=int, default=8044)
+    parser.add_argument("--port", type=int, default=8080)
     parser.add_argument("--task", default=DEFAULT_TASK)
     parser.add_argument("--agent", default=DEFAULT_AGENT)
     parser.add_argument("--python", default=None, help="Python executable for the Isaac Sim worker.")

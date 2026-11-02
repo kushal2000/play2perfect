@@ -85,17 +85,17 @@ python download_checkpoints.py --robot flexiv_wuji_right_human_like
 python evaluation/eval_isaacsim.py \
   --checkpoint-path pretrained_assembly/tight_insertion/model.pth \
   --problem tight_insertion \
-  --port 8044
+  --port 8080
 
 # ...or load all downloaded policies and switch between them in the GUI
-python evaluation/eval_isaacsim.py --policies-dir pretrained_assembly --port 8044
+python evaluation/eval_isaacsim.py --policies-dir pretrained_assembly --port 8080
 
 # With both robots' checkpoints downloaded, no policy args gives a Robot dropdown too;
 # the policy is fixed by the chosen robot and problem
-python evaluation/eval_isaacsim.py --port 8044
+python evaluation/eval_isaacsim.py --port 8080
 ```
 
-Open `http://localhost:8044` in a browser to watch the policy roll out the insertion.
+Open `http://localhost:8080` in a browser to watch the policy roll out the insertion.
 
 ### Offline success-rate evaluation
 
