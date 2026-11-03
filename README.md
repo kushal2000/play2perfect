@@ -7,7 +7,7 @@ contact-rich robotic assembly.
 
 📄 **Paper:** https://arxiv.org/abs/2606.26428
 
-https://github.com/user-attachments/assets/6bfafdbc-41f4-472a-aeaa-444f7e50076b
+<p align="center"><img src="docs/media/teaser.gif" alt="Kuka+Sharpa screwing and Flexiv+Wuji beam assembly" width="100%"></p>
 
 ## Overview
 
