@@ -163,10 +163,11 @@ def load_part_mesh(visuals: list[dict]):
 
     parts = []
     for v in visuals:
-        if "mesh" not in v:
-            continue
-        m = trimesh.load(v["mesh"], force="mesh")
-        m.apply_scale(v["scale"])
+        if "mesh" in v:
+            m = trimesh.load(v["mesh"], force="mesh")
+            m.apply_scale(v["scale"])
+        else:  # primitive box visual (e.g. the L-peg)
+            m = trimesh.creation.box(extents=v["box"])
         m.apply_transform(np.array(v["tf"]))
         parts.append(m)
     return trimesh.util.concatenate(parts)
@@ -221,7 +222,7 @@ def fabrica_base_meshes(problem) -> list[dict]:
     steps = order["steps"]
     base_ids = steps[: steps.index(inserted)]
     return [{"mesh": str(assembly_dir / pid / f"{pid}.obj"), "scale": [1, 1, 1],
-             "tf": np.eye(4).tolist()} for pid in base_ids]
+             "tf": np.eye(4).tolist(), "part_id": pid} for pid in base_ids]
 
 
 def build_plan(args) -> dict:

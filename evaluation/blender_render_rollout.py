@@ -95,6 +95,23 @@ def import_mesh(path, scale=(1, 1, 1)):
         bpy.ops.wm.obj_import(filepath=str(path), forward_axis="Y", up_axis="Z")
     elif ext == ".stl":
         bpy.ops.wm.stl_import(filepath=str(path), forward_axis="Y", up_axis="Z")
+    elif ext in (".glb", ".gltf"):
+        bpy.ops.import_scene.gltf(filepath=str(path))
+        new = [o for o in bpy.data.objects if o not in before]
+        # Our glTF files hold raw URDF (Z-up) coordinates; the importer treats them as
+        # Y-up and turns them +90 deg about X. Undo that and flatten the node tree.
+        undo = Matrix.Rotation(-math.pi / 2, 4, "X")
+        meshes = [o for o in new if o.type == "MESH"]
+        for o in meshes:
+            mw = o.matrix_world.copy()
+            o.parent = None
+            o.matrix_world = undo @ mw
+        for o in new:
+            if o.type != "MESH":
+                bpy.data.objects.remove(o, do_unlink=True)
+        for o in meshes:
+            o.scale = tuple(a * b for a, b in zip(o.scale, scale))
+        return meshes
     else:
         raise ValueError(f"unsupported mesh {path}")
     objs = [o for o in bpy.data.objects if o not in before]
@@ -327,13 +344,21 @@ def main(argv):
 
     part_colors = args.part_colors or PART_COLORS
     base_mat = material("base", srgb_to_linear(tuple(args.base_color)), PART_ROUGHNESS, coat=0.2)
+    # Fixture parts placed by earlier steps (fabrica part_id after the first) keep the
+    # colour they had as moving parts, so a step-2 render matches step 1's.
+    placed = [v for v in plan["base_meshes"] if "part_id" in v][1:]
     for j, v in enumerate(plan["base_meshes"]):
-        b = build_part(f"base_{j}", [v], base_mat)
+        mat = base_mat
+        if v in placed:
+            i = placed.index(v)
+            mat = material(f"placed_{i}", srgb_to_linear(tuple(part_colors[i % len(part_colors)])),
+                           PART_ROUGHNESS, coat=0.2)
+        b = build_part(f"base_{j}", [v], mat)
         b.matrix_world = np_to_matrix(hole_tf)
 
     parts = []
     for k, st in enumerate(stages):
-        rgb = srgb_to_linear(tuple(part_colors[k % len(part_colors)]))
+        rgb = srgb_to_linear(tuple(part_colors[(len(placed) + k) % len(part_colors)]))
         mat = material(f"part_{k}", rgb, PART_ROUGHNESS, coat=0.2)
         p = build_part(f"part_{k}", st["visuals"], mat)
         p.rotation_mode = "QUATERNION"
