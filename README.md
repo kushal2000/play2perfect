@@ -3,7 +3,8 @@
 ### What Matters in Dexterous Play Pretraining for Precise Assembly?
 
 Official code release for **Play2Perfect**, a 2-stage reinforcement-learning pipeline for
-contact-rich robotic assembly.
+contact-rich robotic assembly with dexterous hands, released for **two arm + hand setups**:
+a KUKA iiwa 14 with a Sharpa hand and a Flexiv Rizon 4s with a Wuji Hand 2.
 
 📄 **Paper:** https://arxiv.org/abs/2606.26428
 
@@ -18,9 +19,11 @@ Play2Perfect learns precise, contact-rich assembly in two stages:
 
 This repository provides:
 
+- **Two robot setups**, each with its own play and assembly environments and checkpoints
+  (see [Robot setups](#robot-setups)).
 - **Training** code for both stages in Isaac Sim (Isaac Lab).
 - **Interactive (viser) evaluation** for four assembly tasks plus two everyday-object
-  insertions, using our released checkpoints.
+  insertions, using our released checkpoints, with a robot switch in the GUI.
 - A **minimal sim-to-real deployment** reference.
 
 > This release targets **Isaac Sim only**.
@@ -38,9 +41,19 @@ play2perfect/
 │   └── eval_isaacsim.py   # Interactive viser evaluation
 ├── rl_games/              # Vendored RL library (PPO + SAPG)
 ├── deployment/            # Minimal sim-to-real reference
-├── assets/urdf/           # Robot + task assets
+├── assets/urdf/           # Robots (KUKA+Sharpa, Flexiv+Wuji) + task assets
 └── docs/                  # Installation + deployment guides
 ```
+
+## Robot setups
+
+| Setup | Arm + hand | Play task | Assembly task | Released checkpoints |
+|-------|------------|-----------|---------------|----------------------|
+| `kuka_sharpa` | KUKA LBR iiwa 14 + Sharpa hand | `Isaacsimenvs-Play-Direct-v0` | `Isaacsimenvs-PreciseAssembly-Direct-v0` | play + all six tasks (paper setup) |
+| `flexiv_wuji_right_human_like` | Flexiv Rizon 4s + right Wuji Hand 2 | `Isaacsimenvs-PlayFlexivWujiRight-Direct-v0` | `Isaacsimenvs-PreciseAssemblyFlexivWujiRight-Direct-v0` | play + every task except screwing (snapshots of runs still training) |
+
+Both setups share the same two-stage recipe, task definitions and evaluation tools; only the
+robot (and its table placement) changes.
 
 ## The four assembly tasks
 
@@ -115,6 +128,8 @@ python isaacsimenvs/train.py \
   --headless
 ```
 
+For the Flexiv + Wuji setup, use `--task Isaacsimenvs-PlayFlexivWujiRight-Direct-v0`.
+
 ### 4. Finetune Stage 2 (precise assembly)
 
 ```bash
@@ -125,6 +140,9 @@ python isaacsimenvs/train.py \
   env.precise_assembly.problem=tight_insertion \
   --headless
 ```
+
+For the Flexiv + Wuji setup, use `--task Isaacsimenvs-PreciseAssemblyFlexivWujiRight-Direct-v0`
+and start from `pretrained_policy_flexiv_wuji/model.pth`.
 
 ## Deployment
 
