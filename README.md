@@ -64,8 +64,8 @@ objects, finetuned from the same Stage-1 play policy with the same environment a
 |:----:|------|------|----------------|
 | <img src="docs/media/tasks/tight_insertion.gif" width="220" alt="Tight insertion (L-peg, 0.5 mm tolerance)"> | Tight insertion (L-peg, 0.5 mm tolerance)<br><sub>shown on KUKA + Sharpa</sub> | Assembly | `tight_insertion` |
 | <img src="docs/media/tasks/beam_assembly_step1.gif" width="220" alt="Beam assembly — step 1"> | Beam assembly — step 1<br><sub>shown on KUKA + Sharpa</sub> | Assembly | `beam_assembly_step1` |
-| <img src="docs/media/tasks/screwing.gif" width="220" alt="Screwing (furniture leg)"> | Screwing (furniture leg)<br><sub>shown on KUKA + Sharpa</sub> | Assembly | `screwing` |
 | <img src="docs/media/tasks/beam_assembly_step2.gif" width="220" alt="Beam assembly — step 2"> | Beam assembly — step 2<br><sub>shown on Flexiv + Wuji</sub> | Assembly | `beam_assembly_step2` |
+| <img src="docs/media/tasks/screwing.gif" width="220" alt="Screwing (furniture leg)"> | Screwing (furniture leg)<br><sub>shown on KUKA + Sharpa</sub> | Assembly | `screwing` |
 | <img src="docs/media/tasks/fork_insertion.gif" width="220" alt="Fork into a flatware holder (YCB fork scan, handle first, 1 mm clearance)"> | Fork into a flatware holder (YCB fork scan, handle first, 1 mm clearance)<br><sub>shown on Flexiv + Wuji</sub> | Everyday object | `fork_insertion` |
 | <img src="docs/media/tasks/plug_insertion.gif" width="220" alt="USB-C wall plug into a power-strip socket (1.5 mm blades, 0.5 mm clearance)"> | USB-C wall plug into a power-strip socket (1.5 mm blades, 0.5 mm clearance)<br><sub>shown on Flexiv + Wuji</sub> | Everyday object | `plug_insertion` |
 
