@@ -42,3 +42,4 @@ pretrained_assembly/
 
 # Cluster (Slurm) launch scripts are site-specific; kept local only.
 scripts/cluster/
+renders/
