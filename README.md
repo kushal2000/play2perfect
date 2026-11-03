@@ -55,24 +55,19 @@ play2perfect/
 Both setups share the same two-stage recipe, task definitions and evaluation tools; only the
 robot (and its table placement) changes.
 
-## The four assembly tasks
+## Tasks: four assembly tasks + two everyday-object insertions
 
-| Task | `problem` key |
-|------|----------------|
-| Tight insertion (L-peg, 0.5 mm tolerance) | `tight_insertion` |
-| Beam assembly — step 1 | `beam_assembly_step1` |
-| Beam assembly — step 2 | `beam_assembly_step2` |
-| Screwing (furniture leg) | `screwing` |
+The four assembly tasks from the paper, plus two insertions with real-world-scale everyday
+objects, finetuned from the same Stage-1 play policy with the same environment and settings:
 
-### Everyday-object insertions
-
-Two additional tasks with real-world-scale everyday objects, finetuned from the same
-Stage-1 play policy with the same environment and settings as the paper tasks:
-
-| Task | `problem` key |
-|------|----------------|
-| Fork into a flatware holder (YCB fork scan, handle first, 1 mm clearance) | `fork_insertion` |
-| USB-C wall plug into a power-strip socket (1.5 mm blades, 0.5 mm clearance) | `plug_insertion` |
+| Task | Type | `problem` key |
+|------|------|----------------|
+| Tight insertion (L-peg, 0.5 mm tolerance) | Assembly | `tight_insertion` |
+| Beam assembly — step 1 | Assembly | `beam_assembly_step1` |
+| Beam assembly — step 2 | Assembly | `beam_assembly_step2` |
+| Screwing (furniture leg) | Assembly | `screwing` |
+| Fork into a flatware holder (YCB fork scan, handle first, 1 mm clearance) | Everyday object | `fork_insertion` |
+| USB-C wall plug into a power-strip socket (1.5 mm blades, 0.5 mm clearance) | Everyday object | `plug_insertion` |
 
 ## Installation
 
