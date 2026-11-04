@@ -141,7 +141,7 @@
   ],
   "wheel": {
     "filename": "play2perfect_mjlab-0.1.0-py3-none-any.whl",
-    "sha256": "f3c59dbd2d792d045cf82b3cc5006687fe94fb8f040235807a80ca19db663f69",
+    "sha256": "dae4d8ff4b15b335b799b88164a56750dc489031b28bbb076598227db5efcba9",
     "bytes": 236568,
     "verified_resources": [
       "play2perfect_mjlab/resources/configs/isaac_lab_tight.json",
