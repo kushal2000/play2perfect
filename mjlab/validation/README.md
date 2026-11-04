@@ -23,7 +23,7 @@ Local environment installation reuses a package cache through hardlinks.
 
 CI run: [41788943757](https://github.com/tylerlum/play2perfect_mjlab/actions/runs/41788943757).
 This link is private until publication. The workflow itself is included at
-`../.github/workflows/mjlab.yml` relative to the package's parent repository.
+[`../../.github/workflows/mjlab.yml`](../../.github/workflows/mjlab.yml).
 
 Machine-readable results are in [2026-11-04](2026-11-04/summary.json). Per-recipe
 reports retain exact restore checks, actual physics settings and checkpoint
