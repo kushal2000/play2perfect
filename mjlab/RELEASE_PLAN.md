@@ -1,9 +1,11 @@
 # MJLab assembly release plan
 
 This document records the initial release plan. The minimal package is now
-implemented and its CPU/CUDA software checks pass. See README.md and
-validation/README.md for the tested scope. Public publication and upstream
-review remain separate steps.
+implemented and its CPU/CUDA software checks pass. It is public on
+[`tylerlum/play2perfect:release/mjlab-minimal-assembly`](https://github.com/tylerlum/play2perfect/tree/release/mjlab-minimal-assembly/mjlab),
+with [draft upstream PR #4](https://github.com/kushal2000/play2perfect/pull/4).
+See README.md and validation/README.md for the tested scope. Upstream review
+and merging remain separate steps.
 It starts from official Play2Perfect `main` at
 `621459224dd3618456de273871e507e380d4dedb` (November 3, 2026).
 The research implementation already trains assembly policies in MJLab.
@@ -13,7 +15,9 @@ The remaining work makes that implementation usable from a clean checkout.
 
 Add an optional `mjlab/` package to the official Play2Perfect repository through
 a focused branch and pull request. Keep its dependencies and commands separate
-from Isaac Lab. Merge to `main` after the release checks below pass.
+from Isaac Lab. Merge to `main` after maintainer review and an independent run
+of the documented package checks. Full-scale training reproduction from the
+extracted package is still pending; reference curves identify that limit.
 
 Use a separate public companion repository only if the maintainers prefer to
 keep the experimental physics dependencies outside the official release.
@@ -21,9 +25,10 @@ Do not publish the existing private research repository wholesale: its history,
 experiment archives, machine paths and tool-use work are outside this release.
 
 The current GitHub account has read access, but no push access, to
-`kushal2000/play2perfect`. The eventual upstream contribution therefore needs
-a public fork and PR, or a maintainer-owned branch. This local branch is based
-on the public repository, not the private research history.
+`kushal2000/play2perfect`. The contribution therefore uses the public fork and
+draft PR linked above. Its branch is based on the public repository and does
+not include the private research history. The private review branch remains
+available, but the public fork is the upstream review target.
 
 ## Minimal scope
 

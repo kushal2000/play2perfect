@@ -24,8 +24,9 @@ Local environment installation reuses a package cache through hardlinks.
 | Reference plotting | All four full scalar histories verify and render on CPU |
 | GitHub CI | Fresh install, prepared assets, tests and wheel build pass |
 
-CI run: [41788943757](https://github.com/tylerlum/play2perfect_mjlab/actions/runs/41788943757).
-This link is private until publication. The workflow itself is included at
+Public clean-install CI passes at `62b5a8f`:
+[41905455907](https://github.com/tylerlum/play2perfect/actions/runs/41905455907).
+The workflow itself is included at
 [`../../.github/workflows/mjlab.yml`](../../.github/workflows/mjlab.yml).
 
 Machine-readable results are in [2026-11-04](2026-11-04/summary.json). Per-recipe
