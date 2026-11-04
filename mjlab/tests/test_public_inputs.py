@@ -3,6 +3,7 @@
 import hashlib
 import io
 import json
+import urllib.error
 
 import pytest
 
@@ -91,3 +92,44 @@ def test_foundation_rejects_changed_existing_weights(tmp_path, monkeypatch):
     with pytest.raises(ValueError, match="checksum"):
         foundation.prepare_foundation(tmp_path)
     assert checkpoint.read_bytes() == b"changed"
+
+
+def test_transient_partial_download_restarts_without_appending(tmp_path, monkeypatch):
+    attempts = []
+
+    class Interrupted(io.BytesIO):
+        def read(self, size):
+            if self.tell():
+                raise TimeoutError("connection interrupted")
+            return super().read(2)
+
+    def open_stream(*args, **kwargs):
+        attempts.append(1)
+        if len(attempts) == 1:
+            raise urllib.error.HTTPError("url", 503, "busy", {}, None)
+        return Interrupted(b"me") if len(attempts) == 2 else io.BytesIO(b"mesh")
+
+    monkeypatch.setattr(bundles.urllib.request, "urlopen", open_stream)
+    monkeypatch.setattr(bundles.time, "sleep", lambda _: None)
+    target = bundles.cached_asset(record(b"mesh"), tmp_path)
+    assert len(attempts) == 3
+    assert target.read_bytes() == b"mesh"
+    assert list(tmp_path.iterdir()) == [target]
+
+
+@pytest.mark.parametrize("status,attempts", [(404, 1), (503, 3)])
+def test_download_failure_is_bounded_and_leaves_no_cache(
+    tmp_path, monkeypatch, status, attempts
+):
+    calls = []
+
+    def fail(*args, **kwargs):
+        calls.append(1)
+        raise urllib.error.HTTPError("url", status, "failure", {}, None)
+
+    monkeypatch.setattr(bundles.urllib.request, "urlopen", fail)
+    monkeypatch.setattr(bundles.time, "sleep", lambda _: None)
+    with pytest.raises(urllib.error.HTTPError):
+        bundles.cached_asset(record(b"mesh"), tmp_path)
+    assert len(calls) == attempts
+    assert list(tmp_path.iterdir()) == []

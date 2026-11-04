@@ -19,7 +19,7 @@ Local environment installation reuses a package cache through hardlinks.
 | Dense recording | Exact compiled model and every 60 Hz control state saved |
 | Native rendering | Long and multipart MP4s render at 60 fps with no integration or interpolation |
 | Reward plots | Initial and resumed metrics combine with the saved training clock |
-| Automated tests | 29 pass; lint and formatting pass |
+| Automated tests | 32 pass; lint and formatting pass |
 | Source-history evaluation | Six CPU controls / 60 substeps, 10/3/3 queues, finite states and no overflow |
 | Reference plotting | All four full scalar histories verify and render on CPU |
 | GitHub CI | Fresh install, prepared assets, tests and wheel build pass |
@@ -35,6 +35,8 @@ hashes. Small generated test checkpoints are disposable and are not distributed.
 The [history check](2026-11-04/evaluation_history.json) records the new evaluator's
 actual queue and physics settings. Tests confirm that history selection changes
 only evaluation queues, preserving immediate feedback and training settings.
+Download tests also cover transient HTTP failures, interrupted partial transfers,
+bounded retries, and preservation of corrupt existing inputs for inspection.
 
 These are software qualification checks. The tiny learner runs and one-second
 evaluations do **not** measure task success or reproduce a learning curve. The

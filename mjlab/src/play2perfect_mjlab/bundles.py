@@ -6,6 +6,8 @@ import json
 import os
 import shutil
 import tempfile
+import time
+import urllib.error
 import urllib.request
 from importlib.resources import files
 from pathlib import Path
@@ -30,6 +32,42 @@ def checked_file(path, expected, size=None):
         raise ValueError(f"Asset checksum differs: {path}")
 
 
+def download_asset(record, output, attempts=3):
+    """Retry transient transport failures, always restarting the temporary file.
+
+    Size/checksum failures are not retried. Final verification and atomic cache
+    publication remain the caller's responsibility.
+    """
+    for attempt in range(attempts):
+        output.seek(0)
+        output.truncate()
+        try:
+            with urllib.request.urlopen(record["url"], timeout=60) as stream:
+                count = 0
+                while chunk := stream.read(1024 * 1024):
+                    count += len(chunk)
+                    if count > record["bytes"]:
+                        raise ValueError("Downloaded asset exceeds declared size")
+                    output.write(chunk)
+            return
+        except (urllib.error.URLError, TimeoutError, ConnectionError) as error:
+            if isinstance(error, urllib.error.HTTPError) and error.code not in {
+                408,
+                429,
+                500,
+                502,
+                503,
+                504,
+            }:
+                raise
+            if attempt + 1 == attempts:
+                error.add_note(
+                    f"Asset URL failed after {attempts} attempts: {record['url']}"
+                )
+                raise
+            time.sleep(2**attempt)
+
+
 def cached_asset(record, cache):
     target = cache / record["sha256"]
     if target.exists():
@@ -45,13 +83,7 @@ def cached_asset(record, cache):
                 with source.open("rb") as stream:
                     shutil.copyfileobj(stream, output)
             else:
-                with urllib.request.urlopen(record["url"], timeout=60) as stream:
-                    count = 0
-                    while chunk := stream.read(1024 * 1024):
-                        count += len(chunk)
-                        if count > record["bytes"]:
-                            raise ValueError("Downloaded asset exceeds declared size")
-                        output.write(chunk)
+                download_asset(record, output)
         checked_file(temporary, record["sha256"], record["bytes"])
         temporary.replace(target)
     finally:
