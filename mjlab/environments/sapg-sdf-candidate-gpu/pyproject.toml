@@ -1,0 +1,34 @@
+[project]
+name = "play2perfect-mjlab-sapg-sdf-candidate-blackwell"
+version = "0.1.0"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "play2perfect-mjlab",
+    "mjlab @ git+https://github.com/mujocolab/mjlab.git@8bb2bc9e187797689ec82c78c35019afd2fd0376",
+    "mujoco==3.12.0",
+    "mujoco-warp @ git+https://github.com/thowell/mujoco_warp.git@230fe3034a834cb10dd9b450218f962290f3eaff",
+    "torch==2.14.0+cu130",
+    "onnxruntime==1.24.3",
+    "rl_games @ git+https://github.com/kushal2000/play2perfect.git@ff2fc62873f6c6cd93164123c8358e9ce2d65c9b#subdirectory=rl_games",
+    "gym==0.26.2",
+    "omegaconf>=2.3,<3",
+]
+
+[tool.uv]
+override-dependencies = [
+    "mujoco==3.12.0",
+    "mujoco-warp @ git+https://github.com/thowell/mujoco_warp.git@230fe3034a834cb10dd9b450218f962290f3eaff",
+]
+
+[dependency-groups]
+dev = ["pytest>=8,<10", "ruff>=0.14,<1"]
+
+[tool.uv.sources]
+play2perfect-mjlab = { path = "../..", editable = true }
+torch = { index = "pytorch-cu130" }
+torchvision = { index = "pytorch-cu130" }
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true

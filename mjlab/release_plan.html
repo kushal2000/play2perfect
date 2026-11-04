@@ -1,5 +1,6 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MJLab public release plan</title><style>body{font:16px/1.55 system-ui;background:#f5f6f1;color:#173126;max-width:1000px;margin:40px auto;padding:0 24px}h1{font-size:2.3em;line-height:1.15}h2{margin-top:36px;font-size:1.4em}p,li{max-width:82ch;overflow-wrap:anywhere}pre{overflow:auto;background:#e6ece6;padding:20px;border-radius:8px}code{font-size:.88em}a{color:#195c46}table{border-collapse:collapse;display:block;overflow:auto;width:100%;margin:20px 0}th,td{padding:10px 12px;border-bottom:1px solid #bacac1;text-align:left;vertical-align:top;min-width:100px}th{background:#e6ece6}blockquote{border-left:4px solid #46865a;padding:8px 20px;background:#e8eee7}.lead{border-radius:12px;background:#18372c;color:#eef5e7;padding:20px}</style></head><body><p>Release planning · 4 November 2026</p><div class="lead"><strong>Recommendation:</strong> an optional MJLab backend in the official repository, through a focused PR. Estimate: 2–3 focused days for a tested first release.</div><h1>MJLab assembly release plan</h1>
-<p>This branch is a release plan, not an installable MJLab distribution yet.
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MJLab minimal release plan</title><style>body{font:17px system-ui;line-height:1.55;max-width:1100px;margin:32px auto;padding:0 20px;color:#183029}table{border-collapse:collapse}td,th{border:1px solid #ccd8d2;padding:10px;text-align:left}pre{padding:18px;background:#eef3f0;overflow:auto}a{color:#176e64}</style><body><h1>MJLab assembly release plan</h1>
+<p>This document records the initial release plan. The package and commands are now
+being implemented; see README.md for the current qualification status.
 It starts from official Play2Perfect <code>main</code> at
 <code>621459224dd3618456de273871e507e380d4dedb</code> (November 3, 2026).
 The research implementation already trains assembly policies in MJLab.
@@ -71,20 +72,21 @@ both simulators.</p>
   two environment lockfiles. It excludes assets, checkpoints, tests and docs.
   See <a href="release_inventory.json">release_inventory.json</a>. Dynamic imports still
   need validation; this is not a complete distributable manifest.</li>
-<li><code>prepare_long_leg.py</code> currently reads generated long-leg assets from a private
-  peer checkout. Replace this with public, versioned inputs or a reproducible
-  generator. Preserve mesh, mass, inertia and goal hashes.</li>
-<li><code>prepare_released.py</code> currently expects a developer's browser-output folder
-  for screwing. Replace it with an explicit, pinned public asset preparation step.</li>
+<li>The extracted public asset bootstrap now replaces the private-checkout
+  builders. It includes two small derived meshes and fetches the other inputs
+  from pinned public commits. All five reconstructed bundles match the tested
+  compiled geometry and physics arrays exactly.</li>
 <li>The tested runtime pins MJLab <code>8bb2bc9e</code>, MuJoCo 3.12, Warp 1.18, SDF candidate
   <code>230fe303</code>, and a free-body stabilization patch. Package this explicitly as an
   experimental backend. Stock MJLab is not yet a validated drop-in replacement.</li>
 <li>Upstream now uses 5 mm screwing success tolerance. Our tested long-leg profile
   uses 7.5 mm. Keep the historical profile named and versioned; do not silently
   apply new thresholds to old results.</li>
-<li>Multipart trains separate stages with the recorded 3× part-mass setting. Its
-  composed demonstration uses 1× mass and fixes the first part after handoff.
-  Publish these settings and stage scores separately from joint sequence success.</li>
+<li>Multipart trains separate stages and fixes the first part after handoff in
+  the composed demonstration. The prepared stage and composed bundles use the
+  same 68.57 g / 85.98 g part masses. An earlier 3×/1× mass label in the research
+  notes is not supported by these hash-matched models; use their actual values.
+  Publish stage scores separately from joint sequence success.</li>
 </ul>
 <h2>Proposed layout</h2>
 <pre><code class="language-text">play2perfect/

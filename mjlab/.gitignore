@@ -1,0 +1,11 @@
+/data/
+/runs/
+/.cache/
+/.uv-cache/
+/.venv*/
+/release-artifacts/
+__pycache__/
+*.egg-info/
+/build/
+/dist/
+/MUJOCO_LOG.TXT

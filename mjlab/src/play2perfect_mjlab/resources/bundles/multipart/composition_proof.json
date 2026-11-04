@@ -1,0 +1,73 @@
+{
+  "scope": "Source public part mass/COM/inertia exact; composed seated geometry versus standalone fused second-stage fixture; no integration",
+  "source_manifest_sha256": [
+    "dbfa5196a9ffc3a98a3eabfd99c944d4a0407a371dd14f3a91a8e09c3b79aa9f",
+    "e7f86a9ab22c164e0629f87de563dc641b48833ef4081e46a0fadb9eee4a8606"
+  ],
+  "composed_manifest_sha256": "dbb06ec38b7e006eb71ae7037f6ca2c33d8688be30266562aa0810369b679f37",
+  "scene_sha256": "6213f8cf550ae1bdbf4b90744b6ca36063d4b557c5498be0ca1528cfa0228940",
+  "part_physics": {
+    "object": {
+      "body_mass": 0.06857,
+      "body_inertia": [
+        0.0002249660460890675,
+        0.00022352679999997662,
+        1.3221093910955909e-05
+      ],
+      "body_ipos": [
+        0.002767,
+        -0.0,
+        3.4e-05
+      ],
+      "body_iquat": [
+        -1.4244827771237034e-06,
+        0.7072717100531636,
+        -1.42514751555467e-06,
+        0.7069418138393129
+      ]
+    },
+    "second": {
+      "body_mass": 0.08598,
+      "body_inertia": [
+        0.0003414929,
+        0.0003401606,
+        2.311025e-05
+      ],
+      "body_ipos": [
+        -0.0,
+        -0.000698,
+        -0.0
+      ],
+      "body_iquat": [
+        0.0,
+        0.7071067811865489,
+        0.0,
+        0.7071067811865489
+      ]
+    }
+  },
+  "vertex_counts": [
+    2704,
+    678
+  ],
+  "bidirectional_max_nearest_vertex_distance_m": [
+    0.07795193389500384,
+    0.012920726397844447
+  ],
+  "vertex_tolerance_m": 1e-05,
+  "vertex_sampling_metric_is_not_geometry_equivalence": true,
+  "sampled_solid_distance_m": [
+    9.273571292556237e-05,
+    0.0016099177576016054
+  ],
+  "sampled_solid_tolerance_m": 1e-05,
+  "sampled_solid_point_counts": [
+    8024,
+    2022
+  ],
+  "seated_geometry_passed": false,
+  "geometry_scope": "All collision vertices and triangle centroids, tested against closed target solids; finite sampling, not an all-surface proof",
+  "physics_integration_steps": 0,
+  "all_source_assets_unchanged": true,
+  "builder_sha256": "edc947b309722457c624c224f05a1d453ce153ff13fc4985c4ffab66413eeaef"
+}
