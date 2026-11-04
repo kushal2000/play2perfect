@@ -44,6 +44,12 @@ def main():
     p.add_argument("--onnx", type=Path)
     p.add_argument("--backend", choices=("native", "mjlab"), default="mjlab")
     p.add_argument(
+        "--history",
+        choices=("immediate", "source"),
+        default="immediate",
+        help="Source uses training queue lengths; native supports immediate only",
+    )
+    p.add_argument(
         "--conditioning",
         choices=("public", "50", "40", "30", "20", "10", "0"),
         default="public",
@@ -71,6 +77,8 @@ def main():
     p.add_argument("--trajectory", type=Path)
     p.add_argument("--record-every", type=int, default=20)
     args = p.parse_args()
+    if args.backend == "native" and args.history != "immediate":
+        p.error("Native evaluation supports --history immediate only")
     if args.record_every < 1:
         p.error("--record-every must be positive; use 1 for presentation videos")
     if args.output.exists():
@@ -120,6 +128,7 @@ def main():
         auto_reset=True,
         sdf_initpoints=args.sdf_initpoints,
         evaluation_preset="public_offline",
+        evaluation_history=args.history,
         nconmax=args.nconmax,
         njmax=args.njmax,
         solver_iterations=args.solver_iterations,
@@ -301,6 +310,7 @@ def main():
         ),
         "action_sampling": "learned_gaussian" if args.stochastic else "mean",
         "backend": args.backend,
+        "history_profile": args.history,
         "runtime": runtime_info(),
         "actual_physics": simulation_options(env),
         "collision_capacity": collision_capacity,

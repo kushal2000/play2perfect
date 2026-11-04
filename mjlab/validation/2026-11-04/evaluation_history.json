@@ -1,0 +1,67 @@
+{
+  "scope": "Six-control CPU integration check of source-history evaluation; not task-success evidence.",
+  "seed": 161803,
+  "num_envs": 1,
+  "history_profile": "source",
+  "queue_lengths": {
+    "object_state_queue_length": 10,
+    "observation_queue_length": 3,
+    "action_queue_length": 3
+  },
+  "checkpoint_sha256": "4cb0d09833326de6878ee5681c2b14521823fa616e01b135214a51ffe41c63b9",
+  "actual_physics": {
+    "native": {
+      "solver": 2,
+      "integrator": 3,
+      "cone": 1,
+      "iterations": 100,
+      "ls_iterations": 50
+    },
+    "warp": {
+      "solver": 2,
+      "integrator": 3,
+      "cone": 1,
+      "iterations": 100,
+      "ls_iterations": 50
+    },
+    "sdf_initpoints": 10,
+    "sdf_iterations": 10,
+    "physics_dt": 0.0016666666666666668,
+    "impratio": 10.0,
+    "decimation": 10,
+    "num_envs": 1,
+    "device": "cpu",
+    "nconmax": 512,
+    "njmax": 2048,
+    "manipulated_parts": {
+      "object/object": {
+        "mass_kg": 0.06219,
+        "inertia_kg_m2": [
+          0.00023912250088840267,
+          0.00023912120074517663,
+          9.04330936642054e-06
+        ],
+        "center_of_mass_m": [
+          0.006792,
+          2e-06,
+          -1e-06
+        ]
+      }
+    },
+    "writes_simulation_state": false
+  },
+  "physics_peak": {
+    "contacts_total": 4,
+    "max_world_constraints": 46,
+    "max_solver_iterations": 6,
+    "overflow_flags": [],
+    "physics_substeps": 60,
+    "contact_capacity_total": 512,
+    "constraint_capacity_per_world": 2048,
+    "scope": "Peak over every physics substep and forward refresh",
+    "forward_refreshes": 13
+  },
+  "collector_sha256": "0035b60b6f8bb6a8f47bdb845a199b319ef2c0da0f7b8d17e747795e525858ba",
+  "wrapper_sha256": "7cf31bbd190ea7c8bd7059b8d197257f88862aa0cc7cba781270bf1f3e6422ce",
+  "unfinished_starts": 1
+}

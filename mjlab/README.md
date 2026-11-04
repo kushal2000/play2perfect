@@ -15,6 +15,26 @@ The Isaac Lab backend remains in the parent repository. Upstream Flexiv/Wuji
 support applies to Isaac Lab; this MJLab package currently supports KUKA/Sharpa.
 See [the release plan](RELEASE_PLAN.md) for scope, estimates and upstream options.
 
+## Task demos
+
+All three demos show MJLab fine-tuning from the **original SimToolReal play
+foundation (Isaac Gym)**. They do not inherit task-specific Play2Perfect assembly
+policies. The physical KUKA arm is simulated. Native MuJoCo renders recorded
+states at 1× simulation time, without motion interpolation.
+
+| Demo | Task and recipe | Video / measured result |
+|:---:|---|---|
+| <img src="docs/media/screwing.gif" width="260" alt="Long-leg screwing with the full KUKA arm visible"> | Long-leg screwing<br>`long_leg_fine_v1` | [Video](https://mjlab-dexterous-showcase-tyler-20261102.tylergwlum.chatgpt.site/assets/mujoco-long-leg-foundation51m-reference.mp4)<br>51.02M steps; 77/128 clean withdrawal, source history |
+| <img src="docs/media/tight_insertion.gif" width="260" alt="Tight L-peg insertion in native MuJoCo rendering"> | Tight insertion<br>`tight_stabilized_v1` | [Video](https://mjlab-dexterous-showcase-tyler-20261102.tylergwlum.chatgpt.site/assets/mujoco-tight-insertion-reference.mp4)<br>1,002.33M steps; 16/32 clean endpoints, immediate feedback |
+| <img src="docs/media/multipart.gif" width="260" alt="Two-part beam assembly, with the first part fixed at handoff"> | Multipart<br>`beam_step1_v1` + `beam_step2_v1` | [Front view](https://mjlab-dexterous-showcase-tyler-20261102.tylergwlum.chatgpt.site/assets/mujoco-multipart-front-wide.mp4) · [Reference view](https://mjlab-dexterous-showcase-tyler-20261102.tylergwlum.chatgpt.site/assets/mujoco-multipart-reference.mp4)<br>100.41M / 100.60M steps; one composed sequence |
+
+These are selected successes. Multipart fixes the first part after handoff;
+separate-stage scores do not establish joint success. The demo checkpoints and
+curve endpoints can differ. See [reproduction instructions, reward curves,
+evaluation protocols and limitations](docs/REPRODUCING.md).
+
+![Reward during direct-foundation MJLab fine-tuning](docs/media/reward_overview.png)
+
 ## Install and prepare
 
 Use Linux, Python 3.11, Git and [uv](https://docs.astral.sh/uv/). Commands below
@@ -119,7 +139,7 @@ uv run --no-sync --project environments/sapg-sdf-candidate-cpu \
   --health runs/long_eval/health.json -- \
   --bundle data/long_leg/long_leg \
   --checkpoint runs/long/checkpoint_00001000.pth \
-  --conditioning 0 --num-envs 8 --seed 161803 --device cpu \
+  --conditioning 0 --history source --num-envs 8 --seed 161803 --device cpu \
   --physics-dt 0.0016666666666666668 --decimation 10 \
   --sdf-initpoints 10 --nconmax 512 --njmax 2048 --epa-horizon 64 \
   --steps 6500 --max-seconds 5400 --record-every 1 \
@@ -132,9 +152,16 @@ remain separate for source comparisons. All-goal completion, source withdrawal
 and contact-free withdrawal are different metrics. A contact-free endpoint does
 not establish later retention or real-robot transfer.
 
-For insertion, use `data/released_evaluation/tight_insertion`, timestep
+`--history source` uses the training queue lengths (10/3/3 for object state,
+observation and action). It matches the direct-foundation long-leg reference.
+The default `--history immediate` uses 1/1/1 and preserves earlier offline
+evaluation behavior. Native MuJoCo evaluation supports immediate feedback only.
+Both retain the public offline reset/scoring rules; the queue profile is recorded.
+
+For the insertion reference, use `--history immediate`,
+`data/released_evaluation/tight_insertion`, timestep
 `0.008333333333333333`, decimation `2`, and the same overlay/SDF10 settings.
-For separate beam stages, use the paths below, SDF50 and 1/120 × 2 without the
+For separate beam stages, use `--history immediate`, the paths below, SDF50 and 1/120 × 2 without the
 overlay. Run `scripts/evaluate_released_monitored.py` directly in that case.
 
 | Task | Prepared bundle |
@@ -176,8 +203,8 @@ MUJOCO_GL=egl \
 uv run --no-sync --project environments/sapg-sdf-candidate-cpu \
   python scripts/render_presentation_recording.py \
   --model runs/long_eval/poses.mjb --recording runs/long_eval/poses.npz \
-  --world 0 --azimuth 145 --elevation -22 --distance 1.8 \
-  --lookat 0 0.3 0.62 --style native --output runs/long_video
+  --world 0 --azimuth 145 --elevation -22 --distance 1.85 \
+  --lookat 0 0.3 0.44 --style native --output runs/long_video
 
 uv run --no-sync --project environments/sapg-sdf-candidate-cpu \
   python scripts/plot_training.py --run-dir runs/long \
@@ -188,6 +215,9 @@ Plots show training rewards and goal metrics against transitions and recorded
 process time. They include environment/learner setup and compilation, but exclude
 queueing, imports before `main` and downtime. Resume rollback work remains charged.
 Use frozen evaluation cohorts for success-rate curves.
+
+See [Reproducing the reference experiments](docs/REPRODUCING.md) for all four
+training commands, exact budgets, hardware, raw curve data and video provenance.
 
 ## Scope and limitations
 

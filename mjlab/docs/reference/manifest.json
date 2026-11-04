@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "foundation_sha256": "4cb0d09833326de6878ee5681c2b14521823fa616e01b135214a51ffe41c63b9",
+  "ancestry": "Original SimToolReal play foundation (Isaac Gym) -> independent MJLab assembly fine-tuning; fresh actor and critic optimizers. No released task-specific Play2Perfect actor inherited.",
+  "time_definition": "Warm training wall time: sum of first-to-last logged intervals within accepted sessions. Includes logged duty-cycle idle; excludes cold setup, queueing and unobserved restart gaps. Not end-to-end time.",
+  "reward_definition": "Mean block_mean_reward across six equal-size SAPG blocks, shaped reward per control step. Not episode return.",
+  "goal_definition": "previous_insertion_all_goals_hit: latest completed training insertion episode per world. Not held-out evaluation or contact-free withdrawal.",
+  "runs": {
+    "long_leg_fine_v1": {
+      "title": "Long-leg screwing",
+      "seed": 0,
+      "num_envs": 1536,
+      "horizon": 16,
+      "max_epochs": 20390,
+      "duty_cycle": 0.8,
+      "hardware": "NVIDIA GeForce RTX 4090",
+      "points": 20390,
+      "last_transitions": 501104640,
+      "warm_seconds": 49992.84655334707,
+      "data": "long_leg_fine_v1.csv.gz",
+      "sha256": "580a8f59286591e511b7e7c68a4e48b4f4bfb5fa23fd8712b1ebd3c7bcf6e12e",
+      "input_sha256": {
+        "reward-long-leg-foundation.json": "10dfbcb2f190b9c49cca34ee7408b36d1c29e6c99f5e3e6500d039b6b21166f5",
+        "session_0/metrics.jsonl.gz": "b67eb112fcce74e23e97e17b0d15f45649ca2695185da9446910e7b4a5d60cc4",
+        "session_1/metrics.jsonl.gz": "9c88863d6c923a4d20cc8dda46aeb38a41713999678c2f7044a433e8a51330c1",
+        "session_2/metrics.jsonl.gz": "a7e10705ca2515f640443ff3e21b136e97252bf37dcaab99d4b22be3a4fdc1b2",
+        "session_3/metrics.jsonl.gz": "63981836de36f6a83f2cedcc843f333c8108097b08885f632d3bff518135730c",
+        "session_4/metrics.jsonl.gz": "a562e06360d7e1bd054f985342e0ddfa941a685394f0d2022de0a54558ce6006"
+      }
+    },
+    "tight_stabilized_v1": {
+      "title": "Tight insertion",
+      "seed": 0,
+      "num_envs": 1536,
+      "horizon": 16,
+      "max_epochs": 40785,
+      "duty_cycle": 0.8,
+      "hardware": "NVIDIA GeForce RTX 4090",
+      "points": 40785,
+      "last_transitions": 1002332160,
+      "warm_seconds": 37863.451439549215,
+      "data": "tight_stabilized_v1.csv.gz",
+      "sha256": "60e67c4c6cf10d7f9f01395ebc85ad0de86cbec61d63ff44c214939accf0a77c",
+      "input_sha256": {
+        "tight/session_0/metrics.jsonl.gz": "cd5dad834bd5b6b05bc8a2c84d4003fd6dd031d789bbd07e2e2da10206a67897"
+      }
+    },
+    "beam_step1_v1": {
+      "title": "Beam stage 1",
+      "seed": 0,
+      "num_envs": 768,
+      "horizon": 16,
+      "max_epochs": 8171,
+      "duty_cycle": 1.0,
+      "hardware": "NVIDIA RTX A5000",
+      "points": 8171,
+      "last_transitions": 100405248,
+      "warm_seconds": 19732.796349456534,
+      "data": "beam_step1_v1.csv.gz",
+      "sha256": "3ed93d248121fe429d9cff087aaa30952fe711b68550270f1a084716f137822b",
+      "input_sha256": {
+        "reward-multipart-stage1.json": "d1e15bd55076c94badd4cb3cc57d8eb7366ac8f936ca9ab258b86ad878d95caa",
+        "multipart-stage1.json": "cb0474adcc951b36562f04c16d18ea6513684557f90636ea29a3d87662c80b3e"
+      }
+    },
+    "beam_step2_v1": {
+      "title": "Beam stage 2",
+      "seed": 0,
+      "num_envs": 768,
+      "horizon": 16,
+      "max_epochs": 8187,
+      "duty_cycle": 1.0,
+      "hardware": "NVIDIA RTX A5000",
+      "points": 8187,
+      "last_transitions": 100601856,
+      "warm_seconds": 19251.10239719972,
+      "data": "beam_step2_v1.csv.gz",
+      "sha256": "5b38c491d5cb13cb82eb92e426ce7765e1dfb667a5b97f09dc06d4cadaaaa0d4",
+      "input_sha256": {
+        "reward-multipart-stage2.json": "48a7038ee2f2cdb453ba8e708a4e2ef3399f94002d5e4f3a06e0c0c2693f1427",
+        "multipart-stage2.json": "7662b95fcde87ae4619c3ce099818a9e76f229e3590f9cedcb583b5a0e75d047"
+      }
+    }
+  }
+}

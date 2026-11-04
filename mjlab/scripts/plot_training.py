@@ -24,13 +24,18 @@ def read_history(directories):
         metrics_path = directory / "metrics.jsonl"
         config = json.loads(config_path.read_text())
         rows = []
-        for line in metrics_path.read_text().splitlines():
+        lines = metrics_path.read_text().splitlines()
+        for index, line in enumerate(lines):
             try:
                 rows.append(json.loads(line))
             except json.JSONDecodeError:
+                if index != len(lines) - 1:
+                    raise ValueError(f"Corrupt metrics row {index + 1}: {metrics_path}")
                 break  # An active writer can leave an incomplete last line.
         if not rows:
             raise ValueError(f"No complete metrics: {metrics_path}")
+        if any(b["transitions"] <= a["transitions"] for a, b in zip(rows, rows[1:])):
+            raise ValueError("Transitions must increase within each session")
         contract = config["resume_contract"]
         if contracts and contracts[-1] != contract:
             raise ValueError("Training contracts differ across sessions")

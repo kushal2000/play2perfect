@@ -14,6 +14,7 @@ from mjlab.managers.termination_manager import TerminationTermCfg
 from mjlab.sim import MujocoCfg, SimulationCfg
 
 from play2perfect_mjlab import assembly_mdp as mdp
+from play2perfect_mjlab.evaluation_history import evaluation_queues
 from play2perfect_mjlab.fabrica import add_freeze_welds, restore_static_excludes
 from play2perfect_mjlab.manager_assets import scene_config
 
@@ -59,6 +60,7 @@ def assembly_cfg(
     restore_source_static_filters=False,
     training_preset=None,
     evaluation_preset=None,
+    evaluation_history="immediate",
     nconmax=512,
     njmax=2048,
     solver_iterations=100,
@@ -68,6 +70,8 @@ def assembly_cfg(
     preserve_world_geometry=True,
     initialize_object_qpos0=True,
 ):
+    if evaluation_history != "immediate" and evaluation_preset is None:
+        raise ValueError("Evaluation history requires an evaluation preset")
     metadata = json.loads((bundle / "manifest.json").read_text())
     metadata["world_geometry_preserved"] = preserve_world_geometry
     if metadata.get("stages"):
@@ -146,6 +150,7 @@ def assembly_cfg(
                 + randomization[f"source_step{step}_recipe"]
             )
         if evaluation_preset:
+            queues = evaluation_queues(evaluation_history, randomization)
             # Retain object start variation and goal XY bias, as public eval does.
             randomization.update(
                 name="public_offline_long_leg_v2" if long_leg else "public_offline_v1",
@@ -155,9 +160,6 @@ def assembly_cfg(
                 fixture_yaw_degrees=0,
                 goal_yaw_observation_degrees=0,
                 object_scale_observation_range=[1, 1],
-                object_state_queue_length=1,
-                observation_queue_length=1,
-                action_queue_length=1,
                 object_position_observation_std=0,
                 object_rotation_observation_degrees=0,
                 joint_velocity_observation_std=0,
@@ -168,6 +170,7 @@ def assembly_cfg(
                 if long_leg
                 else 0.015,
                 random_goal_fraction=0.0,
+                **queues,
             )
         for key in ("success_steps", "near_goal_counter"):
             metadata[key] = randomization[key]

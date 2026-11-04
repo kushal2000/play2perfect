@@ -1,8 +1,9 @@
 # Minimal release validation
 
 Checked November 4, 2026 on Linux, Python 3.11 and one RTX 4090. The tested
-implementation is commit `9ac320b`; subsequent changes add these records and
-documentation. Both environments use their committed dependency locks. Public
+learner implementation is commit `9ac320b`. Later changes add documentation,
+reference plots, and explicit evaluation history selection. Both environments use
+their committed dependency locks. Public
 asset and checkpoint downloads succeed without the private research checkout.
 Local environment installation reuses a package cache through hardlinks.
 
@@ -18,7 +19,9 @@ Local environment installation reuses a package cache through hardlinks.
 | Dense recording | Exact compiled model and every 60 Hz control state saved |
 | Native rendering | Long and multipart MP4s render at 60 fps with no integration or interpolation |
 | Reward plots | Initial and resumed metrics combine with the saved training clock |
-| Automated tests | 15 pass; lint and formatting pass |
+| Automated tests | 29 pass; lint and formatting pass |
+| Source-history evaluation | Six CPU controls / 60 substeps, 10/3/3 queues, finite states and no overflow |
+| Reference plotting | All four full scalar histories verify and render on CPU |
 | GitHub CI | Fresh install, prepared assets, tests and wheel build pass |
 
 CI run: [41788943757](https://github.com/tylerlum/play2perfect_mjlab/actions/runs/41788943757).
@@ -28,6 +31,10 @@ This link is private until publication. The workflow itself is included at
 Machine-readable results are in [2026-11-04](2026-11-04/summary.json). Per-recipe
 reports retain exact restore checks, actual physics settings and checkpoint
 hashes. Small generated test checkpoints are disposable and are not distributed.
+
+The [history check](2026-11-04/evaluation_history.json) records the new evaluator's
+actual queue and physics settings. Tests confirm that history selection changes
+only evaluation queues, preserving immediate feedback and training settings.
 
 These are software qualification checks. The tiny learner runs and one-second
 evaluations do **not** measure task success or reproduce a learning curve. The
