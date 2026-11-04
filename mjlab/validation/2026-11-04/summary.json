@@ -137,7 +137,7 @@
   "limitations": [
     "No long-horizon training qualification in this extracted checkout.",
     "No naturally completed multipart handoff in short test.",
-    "Historical recipes and current upstream success tolerances differ."
+    "The effective long-leg tolerance matches upstream; full evaluation protocols are not claimed identical."
   ],
   "wheel": {
     "filename": "play2perfect_mjlab-0.1.0-py3-none-any.whl",

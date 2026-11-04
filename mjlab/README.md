@@ -191,8 +191,9 @@ Use frozen evaluation cohorts for success-rate curves.
 
 ## Scope and limitations
 
-- The historical long-leg recipe uses 7.5 mm tolerance. Current upstream Isaac
-  Lab uses 5 mm for screwing. Keep those scores separate.
+- The long-leg recipe uses a 7.5 mm effective keypoint tolerance. Upstream Isaac
+  Lab uses a 5 mm setting multiplied by `keypoint_scale=1.5`, also 7.5 mm.
+  Matching that threshold alone does not make the full evaluation protocols equal.
 - Physics fidelity and performance vary by task. Smaller physics steps are not
   uniformly better. This package preserves tested settings rather than claiming
   simulator-identical trajectories.

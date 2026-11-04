@@ -58,9 +58,10 @@ both simulators.
 - The tested runtime pins MJLab `8bb2bc9e`, MuJoCo 3.12, Warp 1.18, SDF candidate
   `230fe303`, and a free-body stabilization patch. Package this explicitly as an
   experimental backend. Stock MJLab is not yet a validated drop-in replacement.
-- Upstream now uses 5 mm screwing success tolerance. Our tested long-leg profile
-  uses 7.5 mm. Keep the historical profile named and versioned; do not silently
-  apply new thresholds to old results.
+- Upstream's 5 mm screwing setting is multiplied by `keypoint_scale=1.5` in
+  `_keypoint_success_tolerance_m`, yielding the same 7.5 mm effective threshold
+  as our tested long-leg profile. Keep the full protocols and named profiles
+  explicit; the shared threshold alone does not establish evaluation parity.
 - Multipart trains separate stages and fixes the first part after handoff in
   the composed demonstration. The prepared stage and composed bundles use the
   same 68.57 g / 85.98 g part masses. An earlier 3×/1× mass label in the research
