@@ -4,11 +4,12 @@ An experimental MJLab backend for KUKA iiwa 14 + Sharpa: long-leg screwing,
 tight insertion and two-stage beam assembly. Train from the original SimToolReal
 play foundation with the existing six-block recurrent SAPG learner.
 
-**Development branch: release qualification is in progress.** CPU installation,
-public input downloads, exact scene reconstruction, long-leg learning/resume and
-insertion learning/resume pass. The final four-recipe suite, CUDA packaging check
-and evaluation/render checks remain. Historical research results do not
-substitute for these clean-checkout checks.
+**Experimental backend; minimal release checks pass.** All four recipes complete
+real updates and exact learner restoration in isolated CPU and CUDA environments.
+Public downloads, scene reconstruction, evaluation, dense recording, rendering
+and plotting also pass. GitHub CI installs the package and builds its wheel.
+See [validation records](validation/README.md) for the tested scope and limits.
+These short checks do not establish full training-curve reproduction.
 
 The Isaac Lab backend remains in the parent repository. Upstream Flexiv/Wuji
 support applies to Isaac Lab; this MJLab package currently supports KUKA/Sharpa.
@@ -158,8 +159,9 @@ uv run --no-sync --project environments/sapg-sdf-candidate-cpu \
 
 This is one canonical sequence, not a randomized joint success rate. The prepared
 stage and composed models use the same part masses: 68.57 g and 85.98 g. The
-composed scene fixes the first part after handoff. Its fused seated fixture has a measured geometry
-difference, so the diagnostic requires the explicit flag above. Stage scores
+composed scene fixes the first part after handoff. Its fused seated fixture has
+a measured geometry difference, so the diagnostic requires the explicit flag
+above. Stage scores
 must not be reported as a joint sequence success rate.
 
 ## Render and plot
@@ -199,6 +201,6 @@ Use frozen evaluation cohorts for success-rate curves.
 - Example videos are selected rollouts. Inspect cohort results and contact
   diagnostics before judging reliability or sim-to-real readiness.
 
-After public qualification, suitable wording is: “Play2Perfect assembly
+Suggested release wording is: “Play2Perfect assembly
 fine-tuning supports Isaac Lab and an experimental MJLab backend for
 KUKA/Sharpa.” This does not imply support for every robot or simulator.

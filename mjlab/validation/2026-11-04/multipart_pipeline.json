@@ -1,0 +1,198 @@
+{
+  "final": {
+    "control": 60,
+    "stage": 0,
+    "goals": 0,
+    "distance": 0.1756470501422882,
+    "reward_distance": 0.1756470501422882,
+    "completed": false,
+    "failed": false,
+    "contacts": 15
+  },
+  "handoffs": [],
+  "error": null,
+  "physics_peak": {
+    "contacts_total": 98,
+    "max_world_constraints": 579,
+    "max_solver_iterations": 12,
+    "overflow_flags": [],
+    "physics_substeps": 120,
+    "contact_capacity_total": 512,
+    "constraint_capacity_per_world": 2048,
+    "scope": "peak over every physics substep in this rollout"
+  },
+  "source": {
+    "task_contract": {
+      "version": 5,
+      "world_geometry_preserved": true,
+      "task": "fabrica",
+      "critic_linear_velocity": "body center of mass",
+      "advance_tolerance_m": 0.015,
+      "success_steps": 10,
+      "near_goal_counter": "consecutive",
+      "withdrawal_tolerance_m": 0.0075,
+      "reward_fingertips": "body origins",
+      "release_controls": 60,
+      "physics_dt": 0.008333333333333333,
+      "decimation": 2,
+      "sdf_initpoints": 50,
+      "source_static_filters_restored": true,
+      "object_qpos0_preserved": true,
+      "kinematics_only_rewards": false,
+      "randomization": "none",
+      "contact_buffer_per_world": 512,
+      "constraint_buffer_per_world": 2048,
+      "solver_iterations": 100,
+      "line_search_iterations": 50
+    },
+    "compiled_handoff_preflight": {
+      "qpos_qvel_ctrl_bit_exact": true,
+      "recurrent_reset_requested": true
+    },
+    "fabrica_sha256": "1455240e4107bbe18eee167e615f79ee29b1dd0f1c2133caaae621c6c244c412"
+  },
+  "recording": {
+    "scope": "Continuous public-Torch canonical playback; exact recorded poses",
+    "model_layout": "mjlab_compiled",
+    "frames": 61,
+    "num_envs": 1,
+    "bundle": "data/public_beam_sequence",
+    "sdf_initpoints": 50,
+    "record_every_controls": 1,
+    "compiled_model": "poses.mjb",
+    "compiled_model_sha256": "22b95a5e023e5cf2a313bfc7ace5b81debfe693c3869b18dd04b2b86a332511b",
+    "mujoco_version": "3.12.0"
+  },
+  "input_sha256": {
+    "result.json": "d41ccc4df8bca45fa9f26053adc6b3fe27252792536516c4f05a376c97e2d38a",
+    "poses.json": "e57981b1f74abd19f232411b0b70794feb01bc6a7213ddc8a38bbb7e329a0e37",
+    "poses.npz": "8b815cca6beee365902d611048665c948aa651aba156d739c360146df09014d4",
+    "poses.mjb": "22b95a5e023e5cf2a313bfc7ace5b81debfe693c3869b18dd04b2b86a332511b"
+  },
+  "render": {
+    "inputs": {
+      "model": "22b95a5e023e5cf2a313bfc7ace5b81debfe693c3869b18dd04b2b86a332511b",
+      "recording": "8b815cca6beee365902d611048665c948aa651aba156d739c360146df09014d4"
+    },
+    "script_sha256": "11171f3dbf3d876064d489394e456a948dc91d402a65e3526e4ec6f68bb2dded",
+    "world": 0,
+    "mujoco_version": "3.12.0",
+    "graphics": {
+      "vendor": "NVIDIA Corporation",
+      "renderer": "NVIDIA GeForce RTX 4090/PCIe/SSE2",
+      "version": "4.6.0 NVIDIA 580.82.07"
+    },
+    "source_control_hz": 60,
+    "video_fps": 60,
+    "controls": 60,
+    "recorded_motion_seconds": 1.0,
+    "frozen_endpoint_hold_seconds": 1,
+    "integration_steps": 0,
+    "interpolation": false,
+    "states_unchanged": true,
+    "appearance_only": [
+      {
+        "geom": 140,
+        "change": "Hide goal ghost"
+      },
+      {
+        "geom": 141,
+        "change": "Hide goal ghost"
+      },
+      {
+        "geom": 142,
+        "change": "Hide goal ghost"
+      },
+      {
+        "geom": 143,
+        "change": "Hide goal ghost"
+      },
+      {
+        "geom": 144,
+        "change": "Hide goal ghost"
+      },
+      {
+        "geom": 145,
+        "change": "Hide goal ghost"
+      },
+      {
+        "geom": 146,
+        "change": "Hide goal ghost"
+      },
+      {
+        "geom": 147,
+        "change": "Hide goal ghost"
+      },
+      {
+        "geom": 148,
+        "change": "Hide goal ghost"
+      },
+      {
+        "geom": 149,
+        "change": "Hide goal ghost"
+      },
+      {
+        "geom": 150,
+        "change": "Hide goal ghost"
+      },
+      {
+        "geom": 151,
+        "change": "Hide goal ghost"
+      },
+      {
+        "geom": 152,
+        "change": "Hide goal ghost"
+      },
+      {
+        "geom": 153,
+        "change": "Hide goal ghost"
+      },
+      {
+        "geom": 154,
+        "change": "Hide goal ghost"
+      },
+      {
+        "geom": 155,
+        "change": "Hide goal ghost"
+      },
+      {
+        "geom": 156,
+        "change": "Hide goal ghost"
+      },
+      {
+        "geom": 157,
+        "change": "Hide goal ghost"
+      }
+    ],
+    "visual_style": "native",
+    "full_seven_joint_arm_ranges_rad": [
+      0.09355592727661133,
+      0.0848844051361084,
+      0.1412760466337204,
+      0.09711170196533203,
+      0.0890120416879654,
+      0.08326756954193115,
+      0.13733959197998047
+    ],
+    "camera": {
+      "azimuth": 145.0,
+      "elevation": -22.0,
+      "distance": 1.8,
+      "lookat": [
+        0.0,
+        0.3,
+        0.62
+      ],
+      "orthographic": false,
+      "fovy": 38
+    },
+    "resolution": [
+      512,
+      512
+    ],
+    "preview_only": false,
+    "rendered_video_sha256": "baaa08ee62969a509ba8d27588ed9c0272e9c9bc1816051fd8e939af0a9e109b",
+    "visual_review_pending": false,
+    "visual_review_scope": "Decoded endpoint frame inspected; incomplete 60-control software check, not task success."
+  }
+}

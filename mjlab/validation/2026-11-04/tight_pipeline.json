@@ -1,0 +1,97 @@
+{
+  "actual_physics": {
+    "native": {
+      "solver": 2,
+      "integrator": 3,
+      "cone": 1,
+      "iterations": 100,
+      "ls_iterations": 50
+    },
+    "warp": {
+      "solver": 2,
+      "integrator": 3,
+      "cone": 1,
+      "iterations": 100,
+      "ls_iterations": 50
+    },
+    "sdf_initpoints": 10,
+    "sdf_iterations": 10,
+    "physics_dt": 0.008333333333333333,
+    "impratio": 10.0,
+    "decimation": 2,
+    "num_envs": 2,
+    "device": "cpu",
+    "nconmax": 512,
+    "njmax": 2048,
+    "manipulated_parts": {
+      "object/object": {
+        "mass_kg": 0.0578,
+        "inertia_kg_m2": [
+          0.0003733999999999999,
+          0.00036277284530679654,
+          1.4477154693203272e-05
+        ],
+        "center_of_mass_m": [
+          0.02022,
+          0.004396,
+          0.0
+        ]
+      }
+    },
+    "writes_simulation_state": false
+  },
+  "declared_start_metrics": {
+    "num_starts": 2,
+    "all_goals_hit_count": 0,
+    "all_goals_hit_rate": 0.0,
+    "withdrawal_count": 0,
+    "withdrawal_rate": 0.0,
+    "scope": "All declared starts in denominator; early/unfinished episodes receive no completion credit. Legacy valid-episode rates remain separate.",
+    "contact_free_withdrawal_count": 0,
+    "contact_free_withdrawal_rate": 0.0
+  },
+  "n_unfinished": 2,
+  "recording": {
+    "scope": "Warp first-episode poses; terminal states before reset",
+    "model_layout": "mjlab_compiled",
+    "frames": 61,
+    "num_envs": 2,
+    "bundle": "data/released_evaluation/tight_insertion",
+    "sdf_initpoints": 10,
+    "record_every_controls": 1,
+    "compiled_model": "poses.mjb",
+    "compiled_model_sha256": "695176b3d9b5b2122480e1c5695d9e53b4ca170611bf4db640fd9f6412bbbf14",
+    "mujoco_version": "3.12.0"
+  },
+  "input_sha256": {
+    "result.json": "422b530074ab6230630328ccbe8f71dcf4f856e626f971c5fff6337725008343",
+    "poses.json": "b1929c9f535597e9a177bb16f98472481d6b34bb3361b55d8a282774514cfeb3",
+    "poses.npz": "87f0b9f2e25aecb1d2343d4f9733d08ffe227af4981df976cb97730e0a395cbf",
+    "poses.mjb": "695176b3d9b5b2122480e1c5695d9e53b4ca170611bf4db640fd9f6412bbbf14"
+  },
+  "monitor": {
+    "scope": "Observe every physics substep of the unchanged released-policy collector.\n\nKeep the collector and task packages unchanged. Save capacity flags and the\nfirst nonfinite physical state before an automatic reset could erase it.\n",
+    "physics_peak": {
+      "contacts_total": 30,
+      "max_world_constraints": 103,
+      "max_solver_iterations": 13,
+      "overflow_flags": [],
+      "physics_substeps": 120,
+      "contact_capacity_total": 1024,
+      "constraint_capacity_per_world": 2048,
+      "scope": "Peak over every physics substep and forward refresh",
+      "forward_refreshes": 121
+    },
+    "wrapper_sha256": "7cf31bbd190ea7c8bd7059b8d197257f88862aa0cc7cba781270bf1f3e6422ce",
+    "collector_sha256": "5cf1a2612dc68ea268735b4bdbabbf9a8f109d367cf0a8fadbc894e4d96ff1cc",
+    "model_options": {
+      "solver_enum": 2,
+      "warp_solver_enum": 2,
+      "iterations": 100,
+      "ls_iterations": 50,
+      "timestep": 0.008333333333333333,
+      "sdf_initpoints": 10
+    },
+    "physical_parameters_changed": false
+  }
+}

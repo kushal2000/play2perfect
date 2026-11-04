@@ -1,0 +1,159 @@
+{
+  "actual_physics": {
+    "native": {
+      "solver": 2,
+      "integrator": 3,
+      "cone": 1,
+      "iterations": 100,
+      "ls_iterations": 50
+    },
+    "warp": {
+      "solver": 2,
+      "integrator": 3,
+      "cone": 1,
+      "iterations": 100,
+      "ls_iterations": 50
+    },
+    "sdf_initpoints": 10,
+    "sdf_iterations": 10,
+    "physics_dt": 0.0016666666666666668,
+    "impratio": 10.0,
+    "decimation": 10,
+    "num_envs": 2,
+    "device": "cpu",
+    "nconmax": 512,
+    "njmax": 2048,
+    "manipulated_parts": {
+      "object/object": {
+        "mass_kg": 0.06219,
+        "inertia_kg_m2": [
+          0.00023912250088840267,
+          0.00023912120074517663,
+          9.04330936642054e-06
+        ],
+        "center_of_mass_m": [
+          0.006792,
+          2e-06,
+          -1e-06
+        ]
+      }
+    },
+    "writes_simulation_state": false
+  },
+  "declared_start_metrics": {
+    "num_starts": 2,
+    "all_goals_hit_count": 0,
+    "all_goals_hit_rate": 0.0,
+    "withdrawal_count": 0,
+    "withdrawal_rate": 0.0,
+    "scope": "All declared starts in denominator; early/unfinished episodes receive no completion credit. Legacy valid-episode rates remain separate.",
+    "contact_free_withdrawal_count": 0,
+    "contact_free_withdrawal_rate": 0.0
+  },
+  "n_unfinished": 2,
+  "recording": {
+    "scope": "Warp first-episode poses; terminal states before reset",
+    "model_layout": "mjlab_compiled",
+    "frames": 61,
+    "num_envs": 2,
+    "bundle": "data/long_leg/long_leg",
+    "sdf_initpoints": 10,
+    "record_every_controls": 1,
+    "compiled_model": "poses.mjb",
+    "compiled_model_sha256": "9b7d41b556153b3dab38f40c66533c7513c27d8ce49b1d9818f14de78cdb94f6",
+    "mujoco_version": "3.12.0"
+  },
+  "input_sha256": {
+    "result.json": "19e516b28fdca769ff1063c8dcd750738a5bb19e8f790e6e593e30d45ef22444",
+    "poses.json": "811f148bff522e9da2798751a31ac3c64c796df8739211a3c9d4534d9706182f",
+    "poses.npz": "51b16f765e7793230d7f79970c6c5418041170a19d5c2f0ccd043c3b39a1f183",
+    "poses.mjb": "9b7d41b556153b3dab38f40c66533c7513c27d8ce49b1d9818f14de78cdb94f6"
+  },
+  "monitor": {
+    "scope": "Observe every physics substep of the unchanged released-policy collector.\n\nKeep the collector and task packages unchanged. Save capacity flags and the\nfirst nonfinite physical state before an automatic reset could erase it.\n",
+    "physics_peak": {
+      "contacts_total": 39,
+      "max_world_constraints": 133,
+      "max_solver_iterations": 12,
+      "overflow_flags": [],
+      "physics_substeps": 600,
+      "contact_capacity_total": 1024,
+      "constraint_capacity_per_world": 2048,
+      "scope": "Peak over every physics substep and forward refresh",
+      "forward_refreshes": 121
+    },
+    "wrapper_sha256": "7cf31bbd190ea7c8bd7059b8d197257f88862aa0cc7cba781270bf1f3e6422ce",
+    "collector_sha256": "5cf1a2612dc68ea268735b4bdbabbf9a8f109d367cf0a8fadbc894e4d96ff1cc",
+    "model_options": {
+      "solver_enum": 2,
+      "warp_solver_enum": 2,
+      "iterations": 100,
+      "ls_iterations": 50,
+      "timestep": 0.0016666666666666668,
+      "sdf_initpoints": 10
+    },
+    "physical_parameters_changed": false
+  },
+  "render": {
+    "inputs": {
+      "model": "9b7d41b556153b3dab38f40c66533c7513c27d8ce49b1d9818f14de78cdb94f6",
+      "recording": "51b16f765e7793230d7f79970c6c5418041170a19d5c2f0ccd043c3b39a1f183"
+    },
+    "script_sha256": "11171f3dbf3d876064d489394e456a948dc91d402a65e3526e4ec6f68bb2dded",
+    "world": 0,
+    "mujoco_version": "3.12.0",
+    "graphics": {
+      "vendor": "NVIDIA Corporation",
+      "renderer": "NVIDIA GeForce RTX 4090/PCIe/SSE2",
+      "version": "4.6.0 NVIDIA 580.82.07"
+    },
+    "source_control_hz": 60,
+    "video_fps": 60,
+    "controls": 60,
+    "recorded_motion_seconds": 1.0,
+    "frozen_endpoint_hold_seconds": 1,
+    "integration_steps": 0,
+    "interpolation": false,
+    "states_unchanged": true,
+    "appearance_only": [
+      {
+        "geom": 128,
+        "change": "Hide goal ghost"
+      },
+      {
+        "geom": 129,
+        "change": "Hide goal ghost"
+      }
+    ],
+    "visual_style": "native",
+    "full_seven_joint_arm_ranges_rad": [
+      0.14007163047790527,
+      0.07317352294921875,
+      0.14619401097297668,
+      0.059656620025634766,
+      0.10201361775398254,
+      0.0869518518447876,
+      0.14461445808410645
+    ],
+    "camera": {
+      "azimuth": 145.0,
+      "elevation": -22.0,
+      "distance": 1.8,
+      "lookat": [
+        0.0,
+        0.3,
+        0.62
+      ],
+      "orthographic": false,
+      "fovy": 38
+    },
+    "resolution": [
+      512,
+      512
+    ],
+    "preview_only": false,
+    "rendered_video_sha256": "9022947d0d9048872078931eb1a66bda9a3319126fdf869644ea2102e736c7e4",
+    "visual_review_pending": false,
+    "visual_review_scope": "Decoded endpoint frame inspected; incomplete 60-control software check, not task success."
+  }
+}

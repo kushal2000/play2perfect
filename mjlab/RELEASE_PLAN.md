@@ -1,7 +1,9 @@
 # MJLab assembly release plan
 
-This document records the initial release plan. The package and commands are now
-being implemented; see README.md for the current qualification status.
+This document records the initial release plan. The minimal package is now
+implemented and its CPU/CUDA software checks pass. See README.md and
+validation/README.md for the tested scope. Public publication and upstream
+review remain separate steps.
 It starts from official Play2Perfect `main` at
 `621459224dd3618456de273871e507e380d4dedb` (November 3, 2026).
 The research implementation already trains assembly policies in MJLab.

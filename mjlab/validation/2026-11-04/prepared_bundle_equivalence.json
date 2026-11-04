@@ -1,0 +1,52 @@
+[
+  {
+    "task": "long_leg",
+    "metadata_exact": true,
+    "compiled_arrays_exact": 24,
+    "dimensions": [
+      36,
+      35,
+      29
+    ]
+  },
+  {
+    "task": "tight_insertion",
+    "metadata_exact": true,
+    "compiled_arrays_exact": 24,
+    "dimensions": [
+      36,
+      35,
+      29
+    ]
+  },
+  {
+    "task": "beam_step1",
+    "metadata_exact": true,
+    "compiled_arrays_exact": 24,
+    "dimensions": [
+      36,
+      35,
+      29
+    ]
+  },
+  {
+    "task": "beam_step2",
+    "metadata_exact": true,
+    "compiled_arrays_exact": 24,
+    "dimensions": [
+      36,
+      35,
+      29
+    ]
+  },
+  {
+    "task": "multipart",
+    "metadata_exact": true,
+    "compiled_arrays_exact": 24,
+    "dimensions": [
+      43,
+      41,
+      29
+    ]
+  }
+]

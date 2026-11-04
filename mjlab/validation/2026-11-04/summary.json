@@ -1,0 +1,171 @@
+{
+  "checked_utc": "2026-11-04T07:11:01.334125+00:00",
+  "implementation_commit": "9ac320b",
+  "source_changes_after_check": "Documentation and validation records only",
+  "task_success_measured": false,
+  "recipes": {
+    "cpu/long_leg_fine_v1": {
+      "passed": true,
+      "transitions": [
+        24,
+        48
+      ],
+      "result_sha256": "4be4c7124e855856efda98033eba2effd6bf71426930a1366f6aa6d7f190f61d",
+      "source": {
+        "commit": "9ac320b4dff7c15b828ac8d896d9eaf6c53699a2",
+        "dirty": false
+      }
+    },
+    "cpu/tight_stabilized_v1": {
+      "passed": true,
+      "transitions": [
+        24,
+        48
+      ],
+      "result_sha256": "bc39f8546fa6acd61db49ff963ba290a6494b16f6dccc6a7ab29308a2fdad911",
+      "source": {
+        "commit": "9ac320b4dff7c15b828ac8d896d9eaf6c53699a2",
+        "dirty": false
+      }
+    },
+    "cpu/beam_step1_v1": {
+      "passed": true,
+      "transitions": [
+        24,
+        48
+      ],
+      "result_sha256": "45f8cbeda0298ef1b5629ba9f55ae7c6a52f9ef87bede8b48a4e2030f0a46f21",
+      "source": {
+        "commit": "9ac320b4dff7c15b828ac8d896d9eaf6c53699a2",
+        "dirty": false
+      }
+    },
+    "cpu/beam_step2_v1": {
+      "passed": true,
+      "transitions": [
+        24,
+        48
+      ],
+      "result_sha256": "10708c2f2cded2b92555b9c32752017f291408d366ccf3eab001b63b1e53bf63",
+      "source": {
+        "commit": "9ac320b4dff7c15b828ac8d896d9eaf6c53699a2",
+        "dirty": false
+      }
+    },
+    "cuda/long_leg_fine_v1": {
+      "passed": true,
+      "transitions": [
+        24,
+        48
+      ],
+      "result_sha256": "3a96193f5189f51d24fb58e459329fab3b277f237de49821e15aa6add46a7866",
+      "source": {
+        "commit": "9ac320b4dff7c15b828ac8d896d9eaf6c53699a2",
+        "dirty": false
+      }
+    },
+    "cuda/tight_stabilized_v1": {
+      "passed": true,
+      "transitions": [
+        24,
+        48
+      ],
+      "result_sha256": "3f64838c1b32d8dd675ec164130171deddcb38420cc381ad9ef4203d48ed06c3",
+      "source": {
+        "commit": "9ac320b4dff7c15b828ac8d896d9eaf6c53699a2",
+        "dirty": false
+      }
+    },
+    "cuda/beam_step1_v1": {
+      "passed": true,
+      "transitions": [
+        24,
+        48
+      ],
+      "result_sha256": "6b3462ebaef07913466be0d01f5ab54663e29c08b13b7413eed35557de29684d",
+      "source": {
+        "commit": "9ac320b4dff7c15b828ac8d896d9eaf6c53699a2",
+        "dirty": false
+      }
+    },
+    "cuda/beam_step2_v1": {
+      "passed": true,
+      "transitions": [
+        24,
+        48
+      ],
+      "result_sha256": "5a783d331068cdaa6920257de5b9932ef54c3abdead108ffaa305a6a6f19c548",
+      "source": {
+        "commit": "9ac320b4dff7c15b828ac8d896d9eaf6c53699a2",
+        "dirty": false
+      }
+    }
+  },
+  "pipeline": {
+    "long": {
+      "controls": 60,
+      "passed": true,
+      "task_success_measured": false,
+      "result_sha256": "19e516b28fdca769ff1063c8dcd750738a5bb19e8f790e6e593e30d45ef22444"
+    },
+    "tight": {
+      "controls": 60,
+      "passed": true,
+      "task_success_measured": false,
+      "result_sha256": "422b530074ab6230630328ccbe8f71dcf4f856e626f971c5fff6337725008343"
+    },
+    "multipart": {
+      "controls": 60,
+      "passed": true,
+      "task_success_measured": false,
+      "result_sha256": "d41ccc4df8bca45fa9f26053adc6b3fe27252792536516c4f05a376c97e2d38a"
+    }
+  },
+  "foundation": {
+    "sha256": "4cb0d09833326de6878ee5681c2b14521823fa616e01b135214a51ffe41c63b9",
+    "bytes": 413895044
+  },
+  "ci": {
+    "run": 41788943757,
+    "conclusion": "success"
+  },
+  "visual_review": {
+    "long": "Full physical arm, hand and part visible; incomplete one-second software check.",
+    "multipart": "Both parts visible, first part grasped; incomplete one-second software check.",
+    "plot": "Both update rows and transition/process-time axes visible; zero completed episodes expected."
+  },
+  "limitations": [
+    "No long-horizon training qualification in this extracted checkout.",
+    "No naturally completed multipart handoff in short test.",
+    "Historical recipes and current upstream success tolerances differ."
+  ],
+  "wheel": {
+    "filename": "play2perfect_mjlab-0.1.0-py3-none-any.whl",
+    "sha256": "f3c59dbd2d792d045cf82b3cc5006687fe94fb8f040235807a80ca19db663f69",
+    "bytes": 236568,
+    "verified_resources": [
+      "play2perfect_mjlab/resources/configs/isaac_lab_tight.json",
+      "play2perfect_mjlab/resources/configs/isaac_lab_long_leg.json",
+      "play2perfect_mjlab/resources/configs/source_beam_steps.json",
+      "play2perfect_mjlab/resources/bundles/catalog.json",
+      "play2perfect_mjlab/resources/bundles/beam_step1/manifest.json",
+      "play2perfect_mjlab/resources/bundles/beam_step1/scene.xml",
+      "play2perfect_mjlab/resources/bundles/derived/4c7bb244b48ce6b0a757.obj",
+      "play2perfect_mjlab/resources/bundles/derived/f543365f159a073275da.obj",
+      "play2perfect_mjlab/resources/bundles/beam_step2/manifest.json",
+      "play2perfect_mjlab/resources/bundles/beam_step2/scene.xml",
+      "play2perfect_mjlab/resources/bundles/multipart/composition_proof.json",
+      "play2perfect_mjlab/resources/bundles/multipart/manifest.json",
+      "play2perfect_mjlab/resources/bundles/multipart/scene.xml",
+      "play2perfect_mjlab/resources/bundles/tight_insertion/manifest.json",
+      "play2perfect_mjlab/resources/bundles/tight_insertion/scene.xml",
+      "play2perfect_mjlab/resources/bundles/long_leg/manifest.json",
+      "play2perfect_mjlab/resources/bundles/long_leg/scene.xml"
+    ],
+    "licenses": [
+      "play2perfect_mjlab-0.1.0.dist-info/licenses/LICENSE",
+      "play2perfect_mjlab-0.1.0.dist-info/licenses/third_party/mujoco-warp-LICENSE",
+      "play2perfect_mjlab-0.1.0.dist-info/licenses/third_party/play2perfect-website-LICENSE"
+    ]
+  }
+}
