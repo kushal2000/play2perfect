@@ -1,0 +1,1401 @@
+diff --git a/mujoco_warp/_src/derivative.py b/mujoco_warp/_src/derivative.py
+index c1d3901cca7a2bf2175e2f74f89e532ebc90d932..03adf6aac97dbb4a7fd5c3da657ace6dd812ad22 100644
+--- a/mujoco_warp/_src/derivative.py
++++ b/mujoco_warp/_src/derivative.py
+@@ -490,7 +490,6 @@ def deriv_rne_body2jnt_sparse(
+   Di: wp.array[int],
+   Dj: wp.array[int],
+   Dcfrcbody_in: wp.array3d[wp.spatial_vector],
+-  flg_subtract: bool,
+   # Out:
+   qDeriv_out: wp.array2d[float],
+ ):
+@@ -505,14 +504,11 @@ def deriv_rne_body2jnt_sparse(
+   dcfrc = Dcfrcbody_in[worldid, body_i, j]
+   term = wp.dot(cdof_in[worldid, i], dcfrc)
+ 
+-  if flg_subtract:
+-    wp.atomic_sub(qDeriv_out[worldid], elemid, dt * term)
+-  else:
+-    wp.atomic_add(qDeriv_out[worldid], elemid, dt * term)
++  wp.atomic_add(qDeriv_out[worldid], elemid, dt * term)
+ 
+ 
+-def deriv_rne_vel(m: Model, d: Data, out: wp.array2d[float], flg_subtract: bool = False):
+-  """Compute RNE velocity derivatives and add/subtract from the output.
++def deriv_rne_vel(m: Model, d: Data, out: wp.array2d[float]):
++  """Compute RNE velocity derivatives and add to the output.
+ 
+   Implements the analytical derivative of inverse-dynamics Coriolis/centrifugal
+   forces with respect to joint velocities.
+@@ -521,7 +517,6 @@ def deriv_rne_vel(m: Model, d: Data, out: wp.array2d[float], flg_subtract: bool
+     m: The model (device).
+     d: The data (device).
+     out: D-structure output array (nworld, nD) to accumulate RNE terms into.
+-    flg_subtract: If True, subtract the RNE derivatives from output instead of adding them.
+   """
+   # TODO(team): consider caching these allocations
+   Dcvel = wp.zeros((d.nworld, m.nbody, m.nv), dtype=wp.spatial_vector)
+@@ -579,11 +574,160 @@ def deriv_rne_vel(m: Model, d: Data, out: wp.array2d[float], flg_subtract: bool
+   wp.launch(
+     deriv_rne_body2jnt_sparse,
+     dim=(d.nworld, m.qD_fullm_i.size),
+-    inputs=[m.dof_bodyid, d.cdof, m.opt.timestep, m.qD_fullm_i, m.qD_fullm_j, Dcfrcbody, flg_subtract],
++    inputs=[m.dof_bodyid, d.cdof, m.opt.timestep, m.qD_fullm_i, m.qD_fullm_j, Dcfrcbody],
+     outputs=[out],
+   )
+ 
+ 
++@wp.func
++def _geom_ellipsoid_fluid_B(
++  # In:
++  semiaxes: wp.vec3,
++  blunt_drag_coef: float,
++  slender_drag_coef: float,
++  ang_drag_coef: float,
++  kutta_lift_coef: float,
++  magnus_lift_coef: float,
++  virtual_mass: wp.vec3,
++  virtual_inertia: wp.vec3,
++  ang_vel: wp.vec3,
++  lin_vel: wp.vec3,
++  density: float,
++  viscosity: float,
++) -> tuple[wp.mat33, wp.mat33, wp.mat33, wp.mat33]:
++  # B = [[B00, B01], [B10, B11]] where rows are [ang; lin], cols are [ang; lin]
++  B00 = wp.mat33(0.0)  # torque wrt ang_vel
++  B01 = wp.mat33(0.0)  # torque wrt lin_vel
++  B10 = wp.mat33(0.0)  # force wrt ang_vel
++  B11 = wp.mat33(0.0)  # force wrt lin_vel
++
++  if density > 0.0:
++    # --- added mass forces ---
++    density_vm = density * virtual_mass
++    density_vi = density * virtual_inertia
++    virtual_lin_mom = wp.cw_mul(density_vm, lin_vel)
++    virtual_ang_mom = wp.cw_mul(density_vi, ang_vel)
++
++    # torque += cross(virtual_ang_mom, ang_vel) -> B00
++    B00 += wp.skew(virtual_ang_mom) - wp.skew(ang_vel) @ wp.diag(density_vi)
++
++    # torque += cross(virtual_lin_mom, lin_vel) -> B01
++    B01 += wp.skew(virtual_lin_mom) - wp.skew(lin_vel) @ wp.diag(density_vm)
++
++    # force += cross(virtual_lin_mom, ang_vel) -> B10
++    B10 += wp.skew(virtual_lin_mom)
++    # Da = d/d(vlm via lin) = _skew_neg(ang), scaled by density*vm -> B11
++    B11 += -wp.skew(ang_vel) @ wp.diag(density_vm)
++
++  # --- Magnus force: force += magnus_coef * cross(ang_vel, lin_vel) ---
++  volume = wp.static(4.0 / 3.0 * wp.pi) * semiaxes[0] * semiaxes[1] * semiaxes[2]
++  magnus_coef = magnus_lift_coef * density * volume
++  B10 -= wp.skew(lin_vel) * magnus_coef
++  B11 += wp.skew(ang_vel) * magnus_coef
++
++  # --- Kutta lift (3x3 -> B11) ---
++  a = (semiaxes[1] * semiaxes[2]) * (semiaxes[1] * semiaxes[2])
++  b = (semiaxes[2] * semiaxes[0]) * (semiaxes[2] * semiaxes[0])
++  c = (semiaxes[0] * semiaxes[1]) * (semiaxes[0] * semiaxes[1])
++  aa = a * a
++  bb = b * b
++  cc = c * c
++
++  x = lin_vel[0]
++  y = lin_vel[1]
++  z = lin_vel[2]
++  xx = x * x
++  yy = y * y
++  zz = z * z
++
++  proj_denom = aa * xx + bb * yy + cc * zz
++  proj_num = a * xx + b * yy + c * zz
++  norm2 = xx + yy + zz
++  df_denom = wp.pi * kutta_lift_coef * density / wp.max(MJ_MINVAL, wp.sqrt(proj_denom * proj_num * norm2))
++
++  dfx_coef = yy * (a - b) + zz * (a - c)
++  dfy_coef = xx * (b - a) + zz * (b - c)
++  dfz_coef = xx * (c - a) + yy * (c - b)
++  proj_term = proj_num / wp.max(MJ_MINVAL, proj_denom)
++  cos_term = proj_num / wp.max(MJ_MINVAL, norm2)
++
++  D = wp.skew(wp.vec3(b - c, c - a, a - b)) * (2.0 * proj_num)
++
++  df_coef = wp.vec3(dfx_coef, dfy_coef, dfz_coef)
++  inner_term = wp.vec3(
++    aa * proj_term - a + cos_term,
++    bb * proj_term - b + cos_term,
++    cc * proj_term - c + cos_term,
++  )
++
++  D += wp.outer(df_coef, inner_term)
++
++  V = wp.diag(lin_vel)
++  D = V @ D @ V - wp.diag(df_coef * proj_num)
++
++  D *= df_denom
++  B11 += D
++
++  # --- viscous drag (3x3 -> B11) ---
++  d_max = wp.max(wp.max(semiaxes[0], semiaxes[1]), semiaxes[2])
++  d_min = wp.min(wp.min(semiaxes[0], semiaxes[1]), semiaxes[2])
++  d_mid = semiaxes[0] + semiaxes[1] + semiaxes[2] - d_max - d_min
++  eq_sphere_D = wp.static(2.0 / 3.0) * (semiaxes[0] + semiaxes[1] + semiaxes[2])
++  A_max = wp.pi * d_max * d_mid
++
++  A_proj = wp.pi * wp.sqrt(proj_denom / wp.max(MJ_MINVAL, proj_num))
++
++  norm = wp.sqrt(xx + yy + zz)
++  inv_norm = 1.0 / wp.max(MJ_MINVAL, norm)
++
++  lin_coef = viscosity * wp.static(3.0 * wp.pi) * eq_sphere_D
++  quad_coef = density * (A_proj * blunt_drag_coef + slender_drag_coef * (A_max - A_proj))
++  Aproj_coef = density * norm * (blunt_drag_coef - slender_drag_coef)
++  dA_coef = wp.pi / wp.max(MJ_MINVAL, wp.sqrt(proj_num * proj_num * proj_num * proj_denom))
++
++  dAproj_dv = wp.vec3(
++    Aproj_coef * dA_coef * a * x * (b * yy * (a - b) + c * zz * (a - c)),
++    Aproj_coef * dA_coef * b * y * (a * xx * (b - a) + c * zz * (b - c)),
++    Aproj_coef * dA_coef * c * z * (a * xx * (c - a) + b * yy * (c - b)),
++  )
++
++  inner = wp.length_sq(lin_vel)
++  D = (wp.outer(lin_vel, lin_vel) + wp.diag(wp.vec3(inner))) * (-quad_coef * inv_norm)
++  D -= wp.outer(lin_vel, dAproj_dv)
++  D -= wp.diag(wp.vec3(lin_coef))
++
++  B11 += D
++
++  # --- viscous torque (3x3 -> B00) ---
++  lin_visc_torq_coef = wp.pi * eq_sphere_D * eq_sphere_D * eq_sphere_D
++  I_max = wp.static(8.0 / 15.0 * wp.pi) * d_mid * d_max * d_max * d_max * d_max
++  II = wp.vec3(
++    ellipsoid_max_moment(semiaxes, 0),
++    ellipsoid_max_moment(semiaxes, 1),
++    ellipsoid_max_moment(semiaxes, 2),
++  )
++
++  mom_coef = wp.vec3(
++    ang_drag_coef * II[0] + slender_drag_coef * (I_max - II[0]),
++    ang_drag_coef * II[1] + slender_drag_coef * (I_max - II[1]),
++    ang_drag_coef * II[2] + slender_drag_coef * (I_max - II[2]),
++  )
++
++  mom_visc = wp.cw_mul(ang_vel, mom_coef)
++  norm_mom = wp.length(mom_visc)
++  density_scaled = density / wp.max(MJ_MINVAL, norm_mom)
++
++  mom_sq = -density_scaled * wp.cw_mul(wp.cw_mul(ang_vel, mom_coef), mom_coef)
++
++  torq_lin_coef = viscosity * lin_visc_torq_coef
++  diag_val = wp.dot(ang_vel, mom_sq) - torq_lin_coef
++
++  D = wp.outer(ang_vel, mom_sq) + wp.diag(wp.vec3(diag_val))
++  B00 += D
++
++  return B00, B01, B10, B11
++
++
+ @wp.func
+ def _deriv_ellipsoid_fluid(
+   # Model:
+@@ -662,140 +806,21 @@ def _deriv_ellipsoid_fluid(
+     virtual_mass = wp.vec3(geom_fluid[geomid, 6], geom_fluid[geomid, 7], geom_fluid[geomid, 8])
+     virtual_inertia = wp.vec3(geom_fluid[geomid, 9], geom_fluid[geomid, 10], geom_fluid[geomid, 11])
+ 
+-    # ===== Build 6x6 B matrix as four 3x3 quadrants =====
+-    # B = [[B00, B01], [B10, B11]] where rows are [ang; lin], cols are [ang; lin]
+-    B00 = wp.mat33(0.0)  # torque wrt ang_vel
+-    B01 = wp.mat33(0.0)  # torque wrt lin_vel
+-    B10 = wp.mat33(0.0)  # force wrt ang_vel
+-    B11 = wp.mat33(0.0)  # force wrt lin_vel
+-
+-    if density > 0.0:
+-      # --- added mass forces ---
+-      density_vm = density * virtual_mass
+-      density_vi = density * virtual_inertia
+-      virtual_lin_mom = wp.cw_mul(density_vm, lin_vel)
+-      virtual_ang_mom = wp.cw_mul(density_vi, ang_vel)
+-
+-      # torque += cross(virtual_ang_mom, ang_vel) -> B00
+-      B00 += wp.skew(virtual_ang_mom) - wp.skew(ang_vel) @ wp.diag(density_vi)
+-
+-      # torque += cross(virtual_lin_mom, lin_vel) -> B01
+-      B01 += wp.skew(virtual_lin_mom) - wp.skew(lin_vel) @ wp.diag(density_vm)
+-
+-      # force += cross(virtual_lin_mom, ang_vel) -> B10
+-      B10 += wp.skew(virtual_lin_mom)
+-      # Da = d/d(vlm via lin) = _skew_neg(ang), scaled by density*vm -> B11
+-      B11 += -wp.skew(ang_vel) @ wp.diag(density_vm)
+-
+-    # --- Magnus force: force += magnus_coef * cross(ang_vel, lin_vel) ---
+-    volume = wp.static(4.0 / 3.0 * wp.pi) * semiaxes[0] * semiaxes[1] * semiaxes[2]
+-    magnus_coef = magnus_lift_coef * density * volume
+-    B10 -= wp.skew(lin_vel) * magnus_coef
+-    B11 += wp.skew(ang_vel) * magnus_coef
+-
+-    # --- Kutta lift (3x3 -> B11) ---
+-    a = (semiaxes[1] * semiaxes[2]) * (semiaxes[1] * semiaxes[2])
+-    b = (semiaxes[2] * semiaxes[0]) * (semiaxes[2] * semiaxes[0])
+-    c = (semiaxes[0] * semiaxes[1]) * (semiaxes[0] * semiaxes[1])
+-    aa = a * a
+-    bb = b * b
+-    cc = c * c
+-
+-    x = lin_vel[0]
+-    y = lin_vel[1]
+-    z = lin_vel[2]
+-    xx = x * x
+-    yy = y * y
+-    zz = z * z
+-    xy = x * y
+-    yz = y * z
+-    xz = x * z
+-
+-    proj_denom = aa * xx + bb * yy + cc * zz
+-    proj_num = a * xx + b * yy + c * zz
+-    norm2 = xx + yy + zz
+-    df_denom = wp.pi * kutta_lift_coef * density / wp.max(MJ_MINVAL, wp.sqrt(proj_denom * proj_num * norm2))
+-
+-    dfx_coef = yy * (a - b) + zz * (a - c)
+-    dfy_coef = xx * (b - a) + zz * (b - c)
+-    dfz_coef = xx * (c - a) + yy * (c - b)
+-    proj_term = proj_num / wp.max(MJ_MINVAL, proj_denom)
+-    cos_term = proj_num / wp.max(MJ_MINVAL, norm2)
+-
+-    D = wp.skew(wp.vec3(b - c, c - a, a - b)) * (2.0 * proj_num)
+-
+-    df_coef = wp.vec3(dfx_coef, dfy_coef, dfz_coef)
+-    inner_term = wp.vec3(
+-      aa * proj_term - a + cos_term,
+-      bb * proj_term - b + cos_term,
+-      cc * proj_term - c + cos_term,
+-    )
+-
+-    D += wp.outer(df_coef, inner_term)
+-
+-    V = wp.diag(lin_vel)
+-    D = V @ D @ V - wp.diag(df_coef * proj_num)
+-
+-    D *= df_denom
+-    B11 += D
+-
+-    # --- viscous drag (3x3 -> B11) ---
+-    d_max = wp.max(wp.max(semiaxes[0], semiaxes[1]), semiaxes[2])
+-    d_min = wp.min(wp.min(semiaxes[0], semiaxes[1]), semiaxes[2])
+-    d_mid = semiaxes[0] + semiaxes[1] + semiaxes[2] - d_max - d_min
+-    eq_sphere_D = wp.static(2.0 / 3.0) * (semiaxes[0] + semiaxes[1] + semiaxes[2])
+-    A_max = wp.pi * d_max * d_mid
+-
+-    A_proj = wp.pi * wp.sqrt(proj_denom / wp.max(MJ_MINVAL, proj_num))
+-
+-    norm = wp.sqrt(xx + yy + zz)
+-    inv_norm = 1.0 / wp.max(MJ_MINVAL, norm)
+-
+-    lin_coef = viscosity * wp.static(3.0 * wp.pi) * eq_sphere_D
+-    quad_coef = density * (A_proj * blunt_drag_coef + slender_drag_coef * (A_max - A_proj))
+-    Aproj_coef = density * norm * (blunt_drag_coef - slender_drag_coef)
+-    dA_coef = wp.pi / wp.max(MJ_MINVAL, wp.sqrt(proj_num * proj_num * proj_num * proj_denom))
+-
+-    dAproj_dv = wp.vec3(
+-      Aproj_coef * dA_coef * a * x * (b * yy * (a - b) + c * zz * (a - c)),
+-      Aproj_coef * dA_coef * b * y * (a * xx * (b - a) + c * zz * (b - c)),
+-      Aproj_coef * dA_coef * c * z * (a * xx * (c - a) + b * yy * (c - b)),
+-    )
+-
+-    inner = wp.length_sq(lin_vel)
+-    D = (wp.outer(lin_vel, lin_vel) + wp.diag(wp.vec3(inner))) * (-quad_coef * inv_norm)
+-    D -= wp.outer(lin_vel, dAproj_dv)
+-    D -= wp.diag(wp.vec3(lin_coef))
+-
+-    B11 += D
+-
+-    # --- viscous torque (3x3 -> B00) ---
+-    lin_visc_torq_coef = wp.pi * eq_sphere_D * eq_sphere_D * eq_sphere_D
+-    I_max = wp.static(8.0 / 15.0 * wp.pi) * d_mid * d_max * d_max * d_max * d_max
+-    II = wp.vec3(
+-      ellipsoid_max_moment(semiaxes, 0),
+-      ellipsoid_max_moment(semiaxes, 1),
+-      ellipsoid_max_moment(semiaxes, 2),
++    B00, B01, B10, B11 = _geom_ellipsoid_fluid_B(
++      semiaxes,
++      blunt_drag_coef,
++      slender_drag_coef,
++      ang_drag_coef,
++      kutta_lift_coef,
++      magnus_lift_coef,
++      virtual_mass,
++      virtual_inertia,
++      ang_vel,
++      lin_vel,
++      density,
++      viscosity,
+     )
+ 
+-    mom_coef = wp.vec3(
+-      ang_drag_coef * II[0] + slender_drag_coef * (I_max - II[0]),
+-      ang_drag_coef * II[1] + slender_drag_coef * (I_max - II[1]),
+-      ang_drag_coef * II[2] + slender_drag_coef * (I_max - II[2]),
+-    )
+-
+-    mom_visc = wp.cw_mul(ang_vel, mom_coef)
+-    norm_mom = wp.length(mom_visc)
+-    density_scaled = density / wp.max(MJ_MINVAL, norm_mom)
+-
+-    mom_sq = -density_scaled * wp.cw_mul(wp.cw_mul(ang_vel, mom_coef), mom_coef)
+-
+-    torq_lin_coef = viscosity * lin_visc_torq_coef
+-    diag_val = wp.dot(ang_vel, mom_sq) - torq_lin_coef
+-
+-    D = wp.outer(ang_vel, mom_sq) + wp.diag(wp.vec3(diag_val))
+-    B00 += D
+-
+     # symmetrize for implicitfast
+     if is_implicitfast:
+       B00 = 0.5 * (B00 + wp.transpose(B00))
+diff --git a/mujoco_warp/_src/derivative_test.py b/mujoco_warp/_src/derivative_test.py
+index ada19867a09ce23441ebfb377ec072d2d085bfd2..5cb1359bd9a1da0a8dd95caa7fdc40a63f9f5869 100644
+--- a/mujoco_warp/_src/derivative_test.py
++++ b/mujoco_warp/_src/derivative_test.py
+@@ -1244,8 +1244,6 @@ class DerivativeTest(parameterized.TestCase):
+       """,
+   }
+ 
+-  # TODO: update implementation for free bodies (https://github.com/google-deepmind/mujoco_warp/pull/1548)
+-  @absltest.skip("Requires updating fluid derivative implementation for free bodies to match MuJoCo 3.11")
+   @parameterized.product(
+     scenario=list(_FLUID_SCENARIOS.keys()),
+     jacobian=[mujoco.mjtJacobian.mjJAC_DENSE, mujoco.mjtJacobian.mjJAC_SPARSE],
+@@ -1284,6 +1282,9 @@ class DerivativeTest(parameterized.TestCase):
+     )
+     mj_out = mj_M - mjm.opt.timestep * mj_qDeriv
+ 
++    has_free_body = bool(m.body_is_free.numpy().any())
++    if has_free_body:
++      mj_out = 0.5 * (mj_out + mj_out.T)
+     name = f"M - dt * qDeriv (fluid {scenario})"
+     if jacobian == mujoco.mjtJacobian.mjJAC_SPARSE:
+       mask = m.M_elemid.numpy() >= 0
+diff --git a/mujoco_warp/_src/forward.py b/mujoco_warp/_src/forward.py
+index 20f462b32becccca16bfd6d5510a64b832c1d261..3ebf0e265852fac04a316e3e75b957299c50f94d 100644
+--- a/mujoco_warp/_src/forward.py
++++ b/mujoco_warp/_src/forward.py
+@@ -43,6 +43,8 @@ from mujoco_warp._src.types import JointType
+ from mujoco_warp._src.types import Model
+ from mujoco_warp._src.types import OverflowType
+ from mujoco_warp._src.types import TrnType
++from mujoco_warp._src.types import mat66
++from mujoco_warp._src.types import vec6
+ from mujoco_warp._src.types import vec10
+ from mujoco_warp._src.warp_util import cache_kernel
+ from mujoco_warp._src.warp_util import event_scope
+@@ -591,16 +593,404 @@ def _map_m2d(
+     qLU_out[worldid, elemid] = 0.0
+ 
+ 
++@wp.kernel
++def _implicit_free_body_reset_m(
++  # Model:
++  body_dofadr: wp.array[int],
++  M_rownnz: wp.array[int],
++  M_rowadr: wp.array[int],
++  body_freeadr: wp.array[int],
++  # Data in:
++  M_in: wp.array2d[float],
++  # Out:
++  qH_out: wp.array2d[float],
++):
++  worldid, freeid = wp.tid()
++  bodyid = body_freeadr[freeid]
++
++  dof_adr = body_dofadr[bodyid]
++  for r in range(6):
++    row = dof_adr + r
++    start = M_rowadr[row]
++    nnz = M_rownnz[row]
++    for k in range(nnz):
++      qH_out[worldid, start + k] = M_in[worldid, start + k]
++
++
++@wp.func
++def _project_spatial_B(
++  # Data in:
++  cdof_in: wp.array2d[wp.spatial_vector],
++  # In:
++  worldid: int,
++  dof_adr: int,
++  geom_rotT: wp.mat33,
++  offset: wp.vec3,
++  B00: wp.mat33,
++  B01: wp.mat33,
++  B10: wp.mat33,
++  B11: wp.mat33,
++) -> mat66:
++  c0 = cdof_in[worldid, dof_adr + 0]
++  c1 = cdof_in[worldid, dof_adr + 1]
++  c2 = cdof_in[worldid, dof_adr + 2]
++  c3 = cdof_in[worldid, dof_adr + 3]
++  c4 = cdof_in[worldid, dof_adr + 4]
++  c5 = cdof_in[worldid, dof_adr + 5]
++
++  ll0 = geom_rotT @ wp.vec3(c0[3], c0[4], c0[5])
++  ll1 = geom_rotT @ wp.vec3(c1[3], c1[4], c1[5])
++  ll2 = geom_rotT @ wp.vec3(c2[3], c2[4], c2[5])
++
++  a3 = wp.vec3(c3[0], c3[1], c3[2])
++  a4 = wp.vec3(c4[0], c4[1], c4[2])
++  a5 = wp.vec3(c5[0], c5[1], c5[2])
++
++  p3 = wp.vec3(c3[3], c3[4], c3[5]) + wp.cross(a3, offset)
++  p4 = wp.vec3(c4[3], c4[4], c4[5]) + wp.cross(a4, offset)
++  p5 = wp.vec3(c5[3], c5[4], c5[5]) + wp.cross(a5, offset)
++
++  la3 = geom_rotT @ a3
++  la4 = geom_rotT @ a4
++  la5 = geom_rotT @ a5
++
++  ll3 = geom_rotT @ p3
++  ll4 = geom_rotT @ p4
++  ll5 = geom_rotT @ p5
++
++  ll_trans = wp.mat33(
++    ll0[0],
++    ll1[0],
++    ll2[0],
++    ll0[1],
++    ll1[1],
++    ll2[1],
++    ll0[2],
++    ll1[2],
++    ll2[2],
++  )
++  la_rot = wp.mat33(
++    la3[0],
++    la4[0],
++    la5[0],
++    la3[1],
++    la4[1],
++    la5[1],
++    la3[2],
++    la4[2],
++    la5[2],
++  )
++  ll_rot = wp.mat33(
++    ll3[0],
++    ll4[0],
++    ll5[0],
++    ll3[1],
++    ll4[1],
++    ll5[1],
++    ll3[2],
++    ll4[2],
++    ll5[2],
++  )
++
++  ll_trans_T = wp.transpose(ll_trans)
++  la_rot_T = wp.transpose(la_rot)
++  ll_rot_T = wp.transpose(ll_rot)
++
++  T_lin = B11 @ ll_trans
++  T_rot = B10 @ la_rot + B11 @ ll_rot
++
++  top_left = ll_trans_T @ T_lin
++  top_right = ll_trans_T @ T_rot
++
++  bot_left = la_rot_T @ (B01 @ ll_trans) + ll_rot_T @ T_lin
++  bot_right = la_rot_T @ (B00 @ la_rot + B01 @ ll_rot) + ll_rot_T @ T_rot
++
++  out = mat66(0.0)
++  for r in range(3):
++    for c in range(3):
++      out[r, c] = top_left[r, c]
++      out[r, 3 + c] = top_right[r, c]
++      out[3 + r, c] = bot_left[r, c]
++      out[3 + r, 3 + c] = bot_right[r, c]
++  return out
++
++
++@wp.kernel
++def _implicit_free_body_solve(
++  # Model:
++  opt_timestep: wp.array[float],
++  opt_wind: wp.array[wp.vec3],
++  opt_density: wp.array[float],
++  opt_viscosity: wp.array[float],
++  opt_integrator: int,
++  opt_disableflags: int,
++  opt_enableflags: int,
++  body_dofadr: wp.array[int],
++  body_geomnum: wp.array[int],
++  body_geomadr: wp.array[int],
++  body_mass: wp.array2d[float],
++  body_inertia: wp.array2d[wp.vec3],
++  dof_treeid: wp.array[int],
++  dof_damping: wp.array2d[float],
++  dof_dampingpoly: wp.array2d[wp.vec2],
++  geom_type: wp.array[int],
++  geom_size: wp.array2d[wp.vec3],
++  geom_fluid: wp.array2d[float],
++  M_rownnz: wp.array[int],
++  M_rowadr: wp.array[int],
++  M_colind: wp.array[int],
++  body_fluid_ellipsoid: wp.array[bool],
++  body_freeadr: wp.array[int],
++  # Data in:
++  qvel_in: wp.array2d[float],
++  xpos_in: wp.array2d[wp.vec3],
++  xmat_in: wp.array2d[wp.mat33],
++  xipos_in: wp.array2d[wp.vec3],
++  ximat_in: wp.array2d[wp.mat33],
++  geom_xpos_in: wp.array2d[wp.vec3],
++  geom_xmat_in: wp.array2d[wp.mat33],
++  subtree_com_in: wp.array2d[wp.vec3],
++  cdof_in: wp.array2d[wp.spatial_vector],
++  M_in: wp.array2d[float],
++  tree_awake_in: wp.array2d[int],
++  cvel_in: wp.array2d[wp.spatial_vector],
++  # In:
++  qfrc_in: wp.array2d[float],
++  # Data out:
++  qacc_out: wp.array2d[float],
++):
++  worldid, freeid = wp.tid()
++  bodyid = body_freeadr[freeid]
++
++  dof_adr = body_dofadr[bodyid]
++
++  # Sleep guard matching mjd_freeMhat: skip if sleeping
++  treeid = dof_treeid[dof_adr]
++  if (opt_enableflags & EnableBit.SLEEP) and (tree_awake_in[worldid, treeid] == 0):
++    return
++
++  timestep = opt_timestep[worldid % opt_timestep.shape[0]]
++
++  # 1. A = M block (gather from sparse lower triangle)
++  A = mat66(0.0)
++  for r in range(6):
++    row = dof_adr + r
++    start = M_rowadr[row]
++    nnz = M_rownnz[row]
++    for k in range(nnz):
++      c = M_colind[start + k] - dof_adr
++      val = M_in[worldid, start + k]
++      A[r, c] = val
++      A[c, r] = val
++
++  # 2. Add joint damping (with damper disable check and polynomial damping)
++  if not (opt_disableflags & DisableBit.DAMPER):
++    for r in range(6):
++      dof = dof_adr + r
++      damp = dof_damping[worldid % dof_damping.shape[0], dof]
++      dpoly = dof_dampingpoly[worldid % dof_dampingpoly.shape[0], dof]
++      v = qvel_in[worldid, dof]
++      A[r, r] += timestep * util_misc._poly_force_deriv(damp, dpoly, v, 1)
++
++  # 3. Add gyroscopic bias velocity derivative
++  mass = body_mass[worldid % body_mass.shape[0], bodyid]
++  R = xmat_in[worldid, bodyid]
++  Xi = ximat_in[worldid, bodyid]
++  inertia = body_inertia[worldid % body_inertia.shape[0], bodyid]
++  s = xipos_in[worldid, bodyid] - xpos_in[worldid, bodyid]
++  qvel_rot = wp.vec3(
++    qvel_in[worldid, dof_adr + 3],
++    qvel_in[worldid, dof_adr + 4],
++    qvel_in[worldid, dof_adr + 5],
++  )
++  lin, rot = math.free_bias_vel_blocks(mass, R, Xi, inertia, s, qvel_rot)
++  h_mass = -timestep * mass
++  for r in range(3):
++    for c in range(3):
++      A[r, 3 + c] += h_mass * lin[r, c]
++      A[3 + r, 3 + c] += timestep * rot[r, c]
++
++  # 4. Fluid force derivatives
++  density = opt_density[worldid % opt_density.shape[0]]
++  viscosity = opt_viscosity[worldid % opt_viscosity.shape[0]]
++  wind = opt_wind[worldid % opt_wind.shape[0]]
++
++  if density > 0.0 or viscosity > 0.0:
++    if body_fluid_ellipsoid[bodyid]:
++      subtree_root = subtree_com_in[worldid, bodyid]
++      xipos = xipos_in[worldid, bodyid]
++      cvel = cvel_in[worldid, bodyid]
++      ang_global = wp.spatial_top(cvel)
++      lin_global = wp.spatial_bottom(cvel)
++      lin_com = lin_global - wp.cross(xipos - subtree_root, ang_global)
++
++      geomadr = body_geomadr[bodyid]
++      geomnum = body_geomnum[bodyid]
++
++      for g in range(geomnum):
++        geomid = geomadr + g
++        coef = geom_fluid[geomid, 0]
++        if coef <= 0.0:
++          continue
++
++        size = geom_size[worldid % geom_size.shape[0], geomid]
++        semiaxes = passive.geom_semiaxes(size, geom_type[geomid])
++        geom_rot = geom_xmat_in[worldid, geomid]
++        geom_rotT = wp.transpose(geom_rot)
++        geom_pos = geom_xpos_in[worldid, geomid]
++
++        # compute local velocity
++        lin_point = lin_com + wp.cross(ang_global, geom_pos - xipos)
++        l_ang = geom_rotT @ ang_global
++        l_lin = geom_rotT @ lin_point
++
++        if wind[0] != 0.0 or wind[1] != 0.0 or wind[2] != 0.0:
++          l_lin -= geom_rotT @ wind
++
++        ang_vel = l_ang
++        lin_vel = l_lin
++
++        blunt_drag_coef = geom_fluid[geomid, 1]
++        slender_drag_coef = geom_fluid[geomid, 2]
++        ang_drag_coef = geom_fluid[geomid, 3]
++        kutta_lift_coef = geom_fluid[geomid, 4]
++        magnus_lift_coef = geom_fluid[geomid, 5]
++        virtual_mass = wp.vec3(geom_fluid[geomid, 6], geom_fluid[geomid, 7], geom_fluid[geomid, 8])
++        virtual_inertia = wp.vec3(geom_fluid[geomid, 9], geom_fluid[geomid, 10], geom_fluid[geomid, 11])
++
++        # Compute 6x6 spatial B matrix once per geom (unsymmetrized for free body)
++        B00, B01, B10, B11 = derivative._geom_ellipsoid_fluid_B(
++          semiaxes,
++          blunt_drag_coef,
++          slender_drag_coef,
++          ang_drag_coef,
++          kutta_lift_coef,
++          magnus_lift_coef,
++          virtual_mass,
++          virtual_inertia,
++          ang_vel,
++          lin_vel,
++          density,
++          viscosity,
++        )
++
++        # 3x3 block projection of J^T @ B @ J
++        offset = geom_pos - subtree_root
++        J_T_B_J = _project_spatial_B(cdof_in, worldid, dof_adr, geom_rotT, offset, B00, B01, B10, B11)
++        for r in range(6):
++          for c in range(6):
++            A[r, c] -= timestep * J_T_B_J[r, c]
++
++    elif mass >= MJ_MINVAL:
++      b_ipos = xipos_in[worldid, bodyid]
++      b_imat = ximat_in[worldid, bodyid]
++      subtree_root = subtree_com_in[worldid, bodyid]
++
++      vel_subtree = cvel_in[worldid, bodyid]
++      v_subtree_ang = wp.vec3(vel_subtree[0], vel_subtree[1], vel_subtree[2])
++      v_subtree_lin = wp.vec3(vel_subtree[3], vel_subtree[4], vel_subtree[5])
++
++      lin_com = v_subtree_lin - wp.cross(b_ipos - subtree_root, v_subtree_ang)
++      b_imat_T = wp.transpose(b_imat)
++      v_local_ang = b_imat_T @ v_subtree_ang
++      v_local_lin = b_imat_T @ (lin_com - wind)
++
++      lvel = wp.spatial_vector(
++        v_local_ang[0],
++        v_local_ang[1],
++        v_local_ang[2],
++        v_local_lin[0],
++        v_local_lin[1],
++        v_local_lin[2],
++      )
++
++      B_box = derivative._deriv_box_fluid(
++        opt_integrator,
++        body_mass,
++        body_inertia,
++        worldid,
++        bodyid,
++        lvel,
++        density,
++        viscosity,
++      )
++      B00 = wp.diag(wp.vec3(B_box[0, 0], B_box[1, 1], B_box[2, 2]))
++      B11 = wp.diag(wp.vec3(B_box[3, 3], B_box[4, 4], B_box[5, 5]))
++      zero33 = wp.mat33(0.0)
++      offset_box = b_ipos - subtree_root
++      J_T_B_J = _project_spatial_B(cdof_in, worldid, dof_adr, b_imat_T, offset_box, B00, zero33, zero33, B11)
++      for r in range(6):
++        for c in range(6):
++          A[r, c] -= timestep * J_T_B_J[r, c]
++
++  # 5. Solve A * x = qfrc
++  A_fact, pivot, ok = math.lu_factor_6x6(A)
++  if ok:
++    b_vec = vec6(0.0)
++    for r in range(6):
++      b_vec[r] = qfrc_in[worldid, dof_adr + r]
++    x = math.lu_solve_6x6(A_fact, pivot, b_vec)
++    for r in range(6):
++      qacc_out[worldid, dof_adr + r] = x[r]
++
++
++def _launch_implicit_free_body_solve(m: Model, d: Data, qacc: wp.array2d[float]):
++  if m.body_freeadr.size == 0:
++    return
++  wp.launch(
++    _implicit_free_body_solve,
++    dim=(d.nworld, m.body_freeadr.size),
++    inputs=[
++      m.opt.timestep,
++      m.opt.wind,
++      m.opt.density,
++      m.opt.viscosity,
++      m.opt.integrator,
++      m.opt.disableflags,
++      m.opt.enableflags,
++      m.body_dofadr,
++      m.body_geomnum,
++      m.body_geomadr,
++      m.body_mass,
++      m.body_inertia,
++      m.dof_treeid,
++      m.dof_damping,
++      m.dof_dampingpoly,
++      m.geom_type,
++      m.geom_size,
++      m.geom_fluid,
++      m.M_rownnz,
++      m.M_rowadr,
++      m.M_colind,
++      m.body_fluid_ellipsoid,
++      m.body_freeadr,
++      d.qvel,
++      d.xpos,
++      d.xmat,
++      d.xipos,
++      d.ximat,
++      d.geom_xpos,
++      d.geom_xmat,
++      d.subtree_com,
++      d.cdof,
++      d.M,
++      d.tree_awake,
++      d.cvel,
++      d.efc.Ma,
++    ],
++    outputs=[qacc],
++  )
++
++
+ @event_scope
+ def implicit(m: Model, d: Data):
+   """Integrates fully implicit in velocity."""
+   if m.opt.integrator == IntegratorType.IMPLICIT:
+-    qH_M = wp.empty(d.M.shape, dtype=float)
+-
+-    # 1. Compute M - dt * qDeriv_smooth in M-structure
++    # 1. Smooth velocity derivatives into M-structure
++    qH_M = wp.empty((d.nworld, m.nC), dtype=float)
+     derivative.deriv_smooth_vel(m, d, qH_M)
+ 
+-    # 2. Map M-structure to D-structure
++    # 2. Map qH_M (M-structure) to qLU (D-structure) via mapM2D.
+     wp.launch(
+       _map_m2d,
+       dim=(d.nworld, m.nD),
+@@ -608,12 +998,15 @@ def implicit(m: Model, d: Data):
+       outputs=[d.qLU],
+     )
+ 
+-    # 3. Compute RNE derivatives, scale by timestep, and subtract in-place from qLU
+-    derivative.deriv_rne_vel(m, d, d.qLU, flg_subtract=True)
++    # 3. Compute RNE derivatives, scale by timestep, and add in-place to qLU.
++    # Note: inverse dynamics Coriolis enters equations of motion as -qfrc_bias,
++    # so M - dt * df/dv = M + dt * d(qfrc_bias)/dv.
++    derivative.deriv_rne_vel(m, d, d.qLU)
+ 
+     # 4. Factorize and solve: qacc = qLU \ Ma
+     qacc = wp.empty((d.nworld, m.nv), dtype=float)
+     smooth.factor_solve_lu(m, d, d.qLU, qacc, d.efc.Ma)
++    _launch_implicit_free_body_solve(m, d, qacc)
+     _advance(m, d, qacc)
+   elif ~(m.opt.disableflags | ~(DisableBit.ACTUATION | DisableBit.SPRING | DisableBit.DAMPER)):
+     # qDeriv is in M-structure; the scratch qLD matches d.qLD (per-block).
+@@ -621,8 +1014,22 @@ def implicit(m: Model, d: Data):
+     qLD = wp.empty_like(d.qLD)
+     qLDiagInv = wp.empty((d.nworld, m.nv), dtype=float)
+     derivative.deriv_smooth_vel(m, d, qDeriv)
++    if m.body_freeadr.size > 0:
++      wp.launch(
++        _implicit_free_body_reset_m,
++        dim=(d.nworld, m.body_freeadr.size),
++        inputs=[
++          m.body_dofadr,
++          m.M_rownnz,
++          m.M_rowadr,
++          m.body_freeadr,
++          d.M,
++        ],
++        outputs=[qDeriv],
++      )
+     qacc = wp.empty((d.nworld, m.nv), dtype=float)
+     smooth.factor_solve_i(m, d, qDeriv, qLD, qLDiagInv, qacc, d.efc.Ma)
++    _launch_implicit_free_body_solve(m, d, qacc)
+     _advance(m, d, qacc)
+   else:
+     _advance(m, d, d.qacc)
+diff --git a/mujoco_warp/_src/forward_test.py b/mujoco_warp/_src/forward_test.py
+index ca24ceba7ff9a4efb5581698d418faa779aade25..a98d7f9acdbc936124832cc67542c89a3989ee25 100644
+--- a/mujoco_warp/_src/forward_test.py
++++ b/mujoco_warp/_src/forward_test.py
+@@ -316,6 +316,138 @@ class ForwardTest(parameterized.TestCase):
+ 
+     np.testing.assert_allclose(d.qvel.numpy()[0], mjd.qvel, atol=1e-3, rtol=1e-3, err_msg="qvel")
+ 
++  def test_implicit_coriolis_two_hinge(self):
++    """Verify implicit integrator with non-planar multi-body Coriolis coupling tracks MuJoCo."""
++    mjm, mjd, m_warp, d_warp = test_data.fixture(
++      xml="""
++      <mujoco model="two_hinges">
++        <option timestep="0.001" integrator="implicit" gravity="0 0 0"/>
++        <worldbody>
++          <body name="body1" pos="0 0 0">
++            <joint name="joint1" type="hinge" pos="0 0 0" axis="0 1 0"/>
++            <geom type="cylinder" size="0.05 0.2" pos="0 0 0.2" mass="1"/>
++            <body name="body2" pos="0 0 0.4">
++              <joint name="joint2" type="hinge" pos="0 0 0" axis="1 0 0"/>
++              <geom type="cylinder" size="0.05 0.2" pos="0 0 0.2" mass="1"/>
++            </body>
++          </body>
++        </worldbody>
++        <keyframe>
++          <key qpos="0.5 0.5" qvel="30 -30"/>
++        </keyframe>
++      </mujoco>
++      """,
++      keyframe=0,
++    )
++
++    for i in range(20):
++      mjw.step(m_warp, d_warp)
++      mujoco.mj_step(mjm, mjd)
++
++      np.testing.assert_allclose(
++        d_warp.qvel.numpy()[0],
++        mjd.qvel,
++        atol=1e-3,
++        rtol=1e-3,
++        err_msg=f"step {i} qvel mismatch between implicit integrator and MuJoCo",
++      )
++
++  @parameterized.parameters(IntegratorType.IMPLICIT, IntegratorType.IMPLICITFAST)
++  def test_standalone_free_body_implicit_fluid(self, integrator):
++    """Verify IMPLICIT and IMPLICITFAST match MuJoCo for standalone free body in fluid."""
++    mjm, mjd, m_warp, d_warp = test_data.fixture(
++      xml="""
++      <mujoco>
++        <option timestep="0.005" density="1.2" viscosity="0.002" wind="1 2 3"/>
++        <worldbody>
++          <body pos="0.1 -0.2 0.5" euler="20 -30 40">
++            <joint type="free"/>
++            <geom type="ellipsoid" size=".1 .2 .3" mass="2" pos=".04 -.02 .03"
++                  fluidshape="ellipsoid"/>
++          </body>
++        </worldbody>
++        <keyframe>
++          <key qpos="0.1 -0.2 0.5 1 0 0 0" qvel="1 -0.5 0.8 5 -3 2"/>
++        </keyframe>
++      </mujoco>
++      """,
++      keyframe=0,
++      overrides={"opt.integrator": integrator},
++    )
++
++    for i in range(10):
++      mjw.step(m_warp, d_warp)
++      mujoco.mj_step(mjm, mjd)
++
++      np.testing.assert_allclose(
++        d_warp.qvel.numpy()[0],
++        mjd.qvel,
++        atol=1e-3,
++        rtol=1e-3,
++        err_msg=f"step {i} qvel mismatch between {integrator} and MuJoCo",
++      )
++
++  @parameterized.parameters(IntegratorType.IMPLICIT, IntegratorType.IMPLICITFAST)
++  def test_free_root_massless_fluid_child(self, integrator):
++    """Verify free root with massless welded child carrying fluid geom matches MuJoCo."""
++    mjm, mjd, m_warp, d_warp = test_data.fixture(
++      xml="""
++      <mujoco>
++        <option timestep="0.005" density="1.2" viscosity="0.002" wind="1 2 3"/>
++        <worldbody>
++          <body name="root" pos="0.1 -0.2 0.5" euler="20 -30 40">
++            <joint type="free"/>
++            <geom type="sphere" size=".1" mass="2"/>
++            <body name="child" pos="0 0 0.2">
++              <geom type="ellipsoid" size=".1 .2 .3" mass="0" fluidshape="ellipsoid"/>
++            </body>
++          </body>
++        </worldbody>
++        <keyframe>
++          <key qpos="0.1 -0.2 0.5 1 0 0 0" qvel="1 -0.5 0.8 5 -3 2"/>
++        </keyframe>
++      </mujoco>
++      """,
++      keyframe=0,
++      overrides={"opt.integrator": integrator},
++    )
++
++    # Free root with massless welded child is admitted as free body in MuJoCo C
++    self.assertTrue(bool(m_warp.body_is_free.numpy().any()))
++
++    inputs = {
++      "qpos",
++      "qvel",
++      "time",
++      "ctrl",
++      "qfrc_applied",
++      "xfrc_applied",
++      "mocap_pos",
++      "mocap_quat",
++      "userdata",
++      "eq_active",
++    }
++    for name, arr in vars(d_warp).items():
++      if name in inputs:
++        continue
++      if isinstance(arr, wp.array):
++        if arr.dtype == float:
++          arr.fill_(wp.inf)
++        elif arr.dtype in (int, wp.int32, wp.uint32):
++          arr.fill_(-1)
++
++    for i in range(10):
++      mjw.step(m_warp, d_warp)
++      mujoco.mj_step(mjm, mjd)
++
++      np.testing.assert_allclose(
++        d_warp.qvel.numpy()[0],
++        mjd.qvel,
++        atol=1e-3,
++        rtol=1e-3,
++        err_msg=f"step {i} qvel mismatch for free root + massless child ({integrator})",
++      )
++
+   @parameterized.parameters(mujoco.mjtJacobian.mjJAC_SPARSE, mujoco.mjtJacobian.mjJAC_DENSE)
+   def test_implicit_tendon_damping(self, jacobian):
+     mjm, mjd, m, d = test_data.fixture(
+diff --git a/mujoco_warp/_src/io.py b/mujoco_warp/_src/io.py
+index c7f2f11509594de99d778f8e0280693bc11e5603..ee06b790365081e0265c2dfe3e7492ac970193d7 100644
+--- a/mujoco_warp/_src/io.py
++++ b/mujoco_warp/_src/io.py
+@@ -478,11 +478,31 @@ def put_model(mjm: mujoco.MjModel, batch_sizes: dict[str, int] | None = None) ->
+   m.mocap_bodyid = np.arange(mjm.nbody)[mjm.body_mocapid >= 0]
+   m.mocap_bodyid = m.mocap_bodyid[mjm.body_mocapid[mjm.body_mocapid >= 0].argsort()]
+   m.body_fluid_ellipsoid = np.zeros(mjm.nbody, dtype=bool)
+-  m.body_fluid_ellipsoid[mjm.geom_bodyid[mjm.geom_fluid.reshape(mjm.ngeom, mujoco.mjNFLUID)[:, 0] > 0]] = True
++  has_fluid = mjm.geom_fluid.reshape(mjm.ngeom, mujoco.mjNFLUID)[:, 0] > 0
++  if np.any(has_fluid):
++    fluid_bodyids = mjm.geom_bodyid[has_fluid]
++    valid_mass = mjm.body_mass[fluid_bodyids] >= types.MJ_MINVAL
++    m.body_fluid_ellipsoid[fluid_bodyids[valid_mass]] = True
+   m.body_fluid_ellipsoid_adr = np.nonzero(m.body_fluid_ellipsoid)[0]
++  body_is_free = np.zeros(mjm.nbody, dtype=bool)
++  has_one_jnt = mjm.body_jntnum == 1
++  if np.any(has_one_jnt):
++    b_indices = np.nonzero(has_one_jnt)[0]
++    jnt_adrs = mjm.body_jntadr[b_indices]
++    is_free_jnt = mjm.jnt_type[jnt_adrs] == mujoco.mjtJoint.mjJNT_FREE
++    if np.any(is_free_jnt):
++      b_free = b_indices[is_free_jnt]
++      jnt_free_adrs = jnt_adrs[is_free_jnt]
++      dof_adrs = mjm.jnt_dofadr[jnt_free_adrs]
++      tree_ids = mjm.dof_treeid[dof_adrs]
++      tree_dof6 = mjm.tree_dofnum[tree_ids] == 6
++      mass_match = mjm.body_subtreemass[b_free] == mjm.body_mass[b_free]
++      body_is_free[b_free] = tree_dof6 & mass_match
++  m.body_is_free = body_is_free
++  m.body_freeadr = np.nonzero(m.body_is_free)[0]
+   body_fluid_box = np.zeros(mjm.nbody, dtype=bool)
+   for b in range(1, mjm.nbody):
+-    if not m.body_fluid_ellipsoid[b] and mjm.body_mass[b] > 0.0:
++    if not m.body_fluid_ellipsoid[b] and mjm.body_mass[b] >= types.MJ_MINVAL:
+       body_fluid_box[b] = True
+   m.body_fluid_box_adr = np.nonzero(body_fluid_box)[0]
+   jnt_limited_slide_hinge = mjm.jnt_limited & np.isin(mjm.jnt_type, (mujoco.mjtJoint.mjJNT_SLIDE, mujoco.mjtJoint.mjJNT_HINGE))
+@@ -1099,6 +1119,7 @@ def put_model(mjm: mujoco.MjModel, batch_sizes: dict[str, int] | None = None) ->
+     {
+       "nbody_branches": len(m.body_branches),
+       "nbranch_start": len(m.body_branch_start),
++      "nbodyfree": sum(body_is_free),
+       "nbody_fluid_ellipsoid": len(m.body_fluid_ellipsoid_adr),
+       "nbody_fluid_box": len(m.body_fluid_box_adr),
+       "njnt_limited_slide_hinge": len(m.jnt_limited_slide_hinge_adr),
+diff --git a/mujoco_warp/_src/io_test.py b/mujoco_warp/_src/io_test.py
+index 7ed12e7bae46d34630a1406f06b8c56a5968ff30..acbd783801bd95fc2989488b9c72e0e26d233c3c 100644
+--- a/mujoco_warp/_src/io_test.py
++++ b/mujoco_warp/_src/io_test.py
+@@ -983,6 +983,10 @@ class IOTest(parameterized.TestCase):
+     self.assertTrue(body_has[mjm.geom_bodyid[0]])
+     self.assertFalse(body_has[0])
+ 
++    is_free = m.body_is_free.numpy()
++    self.assertTrue(is_free[mjm.geom_bodyid[0]])
++    self.assertFalse(is_free[0])
++
+   def test_jacobian_auto(self):
+     mjm = mujoco.MjModel.from_xml_string("""
+       <mujoco>
+diff --git a/mujoco_warp/_src/math.py b/mujoco_warp/_src/math.py
+index f212914ea2160579b7dc77960413a78a92340e87..b72cc3820c132c38491f812f523245d14ac29a6d 100644
+--- a/mujoco_warp/_src/math.py
++++ b/mujoco_warp/_src/math.py
+@@ -331,3 +331,104 @@ def upper_trid_index(n: int, i: int, j: int) -> int:
+   if j < i:
+     i, j = j, i
+   return (i * (2 * n - i - 1)) // 2 + j
++
++
++@wp.func
++def free_bias_vel_blocks(
++  # In:
++  mass: float,
++  R: wp.mat33,
++  Xi: wp.mat33,
++  inertia: wp.vec3,
++  s: wp.vec3,
++  qvel_rot: wp.vec3,
++) -> tuple[wp.mat33, wp.mat33]:
++  """3x3 sub-blocks of (d qfrc_bias / d qvel) for a standalone free body."""
++  w = R @ qvel_rot
++
++  diag_inertia = wp.diag(inertia)
++  Iw = Xi @ diag_inertia @ wp.transpose(Xi)
++
++  ws = wp.cross(w, s)
++  Iww = Iw @ w
++
++  w_dot_s = wp.dot(w, s)
++  K = wp.outer(s, w) - wp.identity(n=3, dtype=float) * w_dot_s + wp.skew(ws)
++
++  lin = K @ R
++
++  s_x_K = wp.skew(s) @ K
++  w_x_Iw = wp.skew(w) @ Iw
++  neg_skew_Iww = wp.mat33(
++    0.0,
++    Iww[2],
++    -Iww[1],
++    -Iww[2],
++    0.0,
++    Iww[0],
++    Iww[1],
++    -Iww[0],
++    0.0,
++  )
++
++  C = -mass * s_x_K + w_x_Iw + neg_skew_Iww
++  rot = wp.transpose(R) @ C @ R
++
++  return lin, rot
++
++
++@wp.func
++def lu_factor_6x6(
++  # In:
++  A_in: types.mat66,
++) -> tuple[types.mat66, types.vec6i, bool]:
++  """LU factorization with partial pivoting for a 6x6 matrix."""
++  A = A_in
++  pivot = types.vec6i(0)
++  for k in range(6):
++    maxval = wp.abs(A[k, k])
++    maxrow = k
++    for i in range(k + 1, 6):
++      val = wp.abs(A[i, k])
++      if val > maxval:
++        maxval = val
++        maxrow = i
++    if maxval < types.MJ_MINVAL:
++      return A, pivot, False
++    pivot[k] = maxrow
++    if maxrow != k:
++      for j in range(6):
++        tmp = A[k, j]
++        A[k, j] = A[maxrow, j]
++        A[maxrow, j] = tmp
++    diaginv = 1.0 / A[k, k]
++    for i in range(k + 1, 6):
++      A[i, k] *= diaginv
++      Aik = A[i, k]
++      for j in range(k + 1, 6):
++        A[i, j] -= Aik * A[k, j]
++  return A, pivot, True
++
++
++@wp.func
++def lu_solve_6x6(
++  # In:
++  A_in: types.mat66,
++  pivot_in: types.vec6i,
++  b_in: types.vec6,
++) -> types.vec6:
++  """Solves A * x = b for a 6x6 system using pre-computed LU factorization and pivots."""
++  x = b_in
++  for i in range(6):
++    p = pivot_in[i]
++    if p != i:
++      tmp = x[i]
++      x[i] = x[p]
++      x[p] = tmp
++    for j in range(i):
++      x[i] -= A_in[i, j] * x[j]
++  for i in range(5, -1, -1):
++    for j in range(i + 1, 6):
++      x[i] -= A_in[i, j] * x[j]
++    x[i] /= A_in[i, i]
++  return x
+diff --git a/mujoco_warp/_src/math_test.py b/mujoco_warp/_src/math_test.py
+index e239ee522b5fa37e043ca145ff9c7fecebf79652..e61c57733beafe2ab2e2e70e7f41a95178c2be80 100644
+--- a/mujoco_warp/_src/math_test.py
++++ b/mujoco_warp/_src/math_test.py
+@@ -13,14 +13,64 @@
+ # limitations under the License.
+ # ==============================================================================
+ 
++import numpy as np
+ import warp as wp
+ from absl.testing import absltest
++from absl.testing import parameterized
+ 
++from mujoco_warp._src import types
+ from mujoco_warp._src.math import closest_segment_to_segment_points
++from mujoco_warp._src.math import free_bias_vel_blocks
++from mujoco_warp._src.math import lu_factor_6x6
++from mujoco_warp._src.math import lu_solve_6x6
+ from mujoco_warp._src.math import upper_tri_index
+ from mujoco_warp._src.math import upper_trid_index
+ 
+ 
++@wp.kernel
++def _lu_solve_6x6_kernel(
++  # In:
++  A_in: wp.array2d[float],
++  b_in: wp.array[float],
++  # Out:
++  x_out: wp.array[float],
++  success_out: wp.array[bool],
++):
++  A_work = types.mat66(0.0)
++  b_vec = types.vec6(0.0)
++  for i in range(6):
++    b_vec[i] = b_in[i]
++    for j in range(6):
++      A_work[i, j] = A_in[i, j]
++
++  A_fact, pivot_work, ok = lu_factor_6x6(A_work)
++  if ok:
++    success_out[0] = True
++    x_vec = lu_solve_6x6(A_fact, pivot_work, b_vec)
++    for i in range(6):
++      x_out[i] = x_vec[i]
++
++
++@wp.kernel
++def _free_bias_vel_blocks_kernel(
++  # In:
++  mass: float,
++  R: wp.mat33,
++  Xi: wp.mat33,
++  inertia: wp.vec3,
++  s: wp.vec3,
++  qvel_rot: wp.vec3,
++  # Out:
++  lin_out: wp.array2d[float],
++  rot_out: wp.array2d[float],
++):
++  lin, rot = free_bias_vel_blocks(mass, R, Xi, inertia, s, qvel_rot)
++  for r in range(3):
++    for c in range(3):
++      lin_out[r, c] = lin[r, c]
++      rot_out[r, c] = rot[r, c]
++
++
+ class ClosestSegmentSegmentPointsTest(absltest.TestCase):
+   """Tests for closest segment-to-segment points."""
+ 
+@@ -126,6 +176,133 @@ class ClosestSegmentSegmentPointsTest(absltest.TestCase):
+     self.assertEqual(upper_trid_index(10, 1, 5), upper_trid_index(10, 5, 1))
+ 
+ 
++class DenseLUTest(parameterized.TestCase):
++  """Tests for 6x6 dense LU factorization and solve."""
++
++  @parameterized.parameters(
++    # General non-singular matrix
++    (
++      np.array(
++        [
++          [10.0, 2.0, 1.0, 0.0, 0.0, 0.0],
++          [3.0, 12.0, 4.0, 1.0, 0.0, 0.0],
++          [1.0, 2.0, 15.0, 2.0, 1.0, 0.0],
++          [0.0, 1.0, 3.0, 11.0, 2.0, 1.0],
++          [0.0, 0.0, 1.0, 2.0, 9.0, 3.0],
++          [0.0, 0.0, 0.0, 1.0, 2.0, 8.0],
++        ],
++        dtype=np.float32,
++      ),
++      np.array([1.0, -2.0, 3.0, 4.0, -5.0, 6.0], dtype=np.float32),
++      True,
++    ),
++    # Zero diagonal matrix requiring pivoting
++    (
++      np.array(
++        [
++          [0.0, 1.0, 2.0, 0.0, 0.0, 0.0],
++          [1.0, 0.0, 3.0, 1.0, 0.0, 0.0],
++          [2.0, 3.0, 0.0, 4.0, 1.0, 0.0],
++          [0.0, 1.0, 4.0, 0.0, 5.0, 2.0],
++          [0.0, 0.0, 1.0, 5.0, 0.0, 3.0],
++          [0.0, 0.0, 0.0, 2.0, 3.0, 0.0],
++        ],
++        dtype=np.float32,
++      ),
++      np.array([2.0, -1.0, 4.0, 3.0, -2.0, 5.0], dtype=np.float32),
++      True,
++    ),
++    # Singular matrix
++    (
++      np.zeros((6, 6), dtype=np.float32),
++      np.zeros(6, dtype=np.float32),
++      False,
++    ),
++  )
++  def test_lu_solve(self, A_np, b_np, expected_success):
++    """Tests 6x6 LU factorization and solve against numpy solution."""
++    A_wp = wp.array(A_np, dtype=float)
++    b_wp = wp.array(b_np, dtype=float)
++    x_wp = wp.zeros(6, dtype=float)
++    success_wp = wp.zeros(1, dtype=bool)
++
++    wp.launch(_lu_solve_6x6_kernel, dim=1, inputs=[A_wp, b_wp], outputs=[x_wp, success_wp])
++
++    self.assertEqual(success_wp.numpy()[0], expected_success)
++    if expected_success:
++      x_ref = np.linalg.solve(A_np, b_np)
++      np.testing.assert_allclose(x_wp.numpy(), x_ref, atol=1e-5, rtol=1e-5)
++
++
++class FreeBiasVelTest(absltest.TestCase):
++  """Tests for standalone free body bias velocity derivative."""
++
++  def test_free_bias_vel_blocks(self):
++    mass = 2.5
++    theta = 0.4
++    R_np = np.array(
++      [
++        [np.cos(theta), -np.sin(theta), 0.0],
++        [np.sin(theta), np.cos(theta), 0.0],
++        [0.0, 0.0, 1.0],
++      ],
++      dtype=np.float32,
++    )
++    Xi_np = np.eye(3, dtype=np.float32)
++    inertia_np = np.array([0.1, 0.2, 0.3], dtype=np.float32)
++    s_np = np.array([0.05, -0.02, 0.03], dtype=np.float32)
++    qvel_rot_np = np.array([1.2, -0.8, 2.1], dtype=np.float32)
++
++    w = R_np @ qvel_rot_np
++    Iw = Xi_np @ np.diag(inertia_np) @ Xi_np.T
++    ws = np.cross(w, s_np)
++    Iww = Iw @ w
++    w_dot_s = float(np.dot(w, s_np))
++    K = (
++      np.outer(s_np, w)
++      - np.eye(3) * w_dot_s
++      + np.array(
++        [
++          [0.0, -ws[2], ws[1]],
++          [ws[2], 0.0, -ws[0]],
++          [-ws[1], ws[0], 0.0],
++        ]
++      )
++    )
++    lin_ref = K @ R_np
++
++    def skew(v):
++      return np.array(
++        [
++          [0.0, -v[2], v[1]],
++          [v[2], 0.0, -v[0]],
++          [-v[1], v[0], 0.0],
++        ]
++      )
++
++    C = -mass * skew(s_np) @ K + skew(w) @ Iw - skew(Iww)
++    rot_ref = R_np.T @ C @ R_np
++
++    lin_wp = wp.zeros((3, 3), dtype=float)
++    rot_wp = wp.zeros((3, 3), dtype=float)
++    wp.launch(
++      _free_bias_vel_blocks_kernel,
++      dim=1,
++      inputs=[
++        mass,
++        wp.mat33(R_np),
++        wp.mat33(Xi_np),
++        wp.vec3(inertia_np),
++        wp.vec3(s_np),
++        wp.vec3(qvel_rot_np),
++      ],
++      outputs=[lin_wp, rot_wp],
++    )
++
++    np.testing.assert_allclose(lin_wp.numpy(), lin_ref, atol=1e-5, rtol=1e-5)
++    np.testing.assert_allclose(rot_wp.numpy(), rot_ref, atol=1e-5, rtol=1e-5)
++
++
+ if __name__ == "__main__":
+   wp.init()
+   absltest.main()
+diff --git a/mujoco_warp/_src/types.py b/mujoco_warp/_src/types.py
+index e6c2f3074afb3b046c28ab1836821a90eb37f69d..9737cc2f1e92c4738b976f8dd1fb45e3623d797e 100644
+--- a/mujoco_warp/_src/types.py
++++ b/mujoco_warp/_src/types.py
+@@ -844,6 +844,10 @@ class mat63f(wp.types.matrix(shape=(6, 3), dtype=float)):
+   pass
+ 
+ 
++class mat66f(wp.types.matrix(shape=(6, 6), dtype=float)):
++  pass
++
++
+ vec5 = vec5f
+ vec6 = vec6f
+ vec8 = vec8f
+@@ -854,6 +858,7 @@ vec128 = vec_pluginattr
+ mat23 = mat23f
+ mat43 = mat43f
+ mat63 = mat63f
++mat66 = mat66f
+ 
+ 
+ def array(*args) -> wp.array:
+@@ -1430,8 +1435,10 @@ class Model:
+     body_branch_start: start index in body_branches for each branch   (nbranch + 1,)
+     mocap_bodyid: id of body for mocap                       (nmocap,)
+     body_fluid_ellipsoid: does body use ellipsoid fluid      (nbody,)
++    body_is_free: is body a standalone free body             (nbody,)
+     body_fluid_ellipsoid_adr: body ids with ellipsoid fluid  (nbody_fluid_ellipsoid,)
+     body_fluid_box_adr: body ids with box fluid              (nbody_fluid_box,)
++    body_freeadr: body ids of free bodies                    (nbodyfree,)
+     jnt_limited_slide_hinge_adr: limited/slide/hinge jntadr
+     jnt_limited_ball_adr: limited/ball jntadr
+     body_isdofancestor: precomputed mask of which DOFs affect each body
+@@ -1925,8 +1932,10 @@ class Model:
+   body_branch_start: array("nbranch_start", int)
+   mocap_bodyid: array("nmocap", int)
+   body_fluid_ellipsoid: array("nbody", bool)
++  body_is_free: array("nbody", bool)
+   body_fluid_ellipsoid_adr: array("nbody_fluid_ellipsoid", int)
+   body_fluid_box_adr: array("nbody_fluid_box", int)
++  body_freeadr: array("nbodyfree", int)
+   jnt_limited_slide_hinge_adr: array("njnt_limited_slide_hinge", int)
+   jnt_limited_ball_adr: array("njnt_limited_ball", int)
+   body_isdofancestor: array("nbody", "nv_pad", int)

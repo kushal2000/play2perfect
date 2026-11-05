@@ -1,0 +1,19 @@
+{
+  "name": "isaac_lab_long_leg_v1",
+  "peer_recipe": "supermimic/cluster/finetune.sub leg_long",
+  "advance_tolerance_m": 0.0075,
+  "random_goal_fraction": 0.1,
+  "random_goal_max_successes": 5,
+  "random_goal_initial_tolerance_m": 0.015,
+  "random_goal_target_tolerance_m": 0.003,
+  "tolerance_curriculum_interval": 3000,
+  "tolerance_curriculum_increment": 0.9,
+  "tolerance_curriculum_success_threshold": 2.0,
+  "random_goal_position_min": [-0.35, -0.2, 0.6],
+  "random_goal_position_max": [0.35, 0.2, 0.95],
+  "random_goal_delta_position": 0.1,
+  "random_goal_delta_rotation_degrees": 90.0,
+  "lifting_reward_scale": 20.0,
+  "lifting_bonus": 300.0,
+  "lift_bonus_fade_threshold": 2.0
+}

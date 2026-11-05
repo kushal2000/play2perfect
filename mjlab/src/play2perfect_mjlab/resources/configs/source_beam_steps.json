@@ -1,0 +1,12 @@
+{
+  "name": "source_beam_steps_v1",
+  "peer_commit": "4b32839537a0253c030754b70c6364d33fb58652",
+  "inherits": "isaac_lab_tight",
+  "recipe": "Public three-times-scale matched-mass Fabrica separate-stage teachers",
+  "source_recipe_directory": "plot_figures/fig2/experiments",
+  "source_step1_recipe": "panel_a_beam_3x_part_2_finetune_rgf0_dr.sub",
+  "source_step2_recipe": "panel_a_beam_3x_part_0_finetune_rgf0_dr.sub",
+  "source_step1_recipe_sha256": "5c9f86b1b896d1c830c58215d9eb7dcb1868bff29bfd220419cc8d065942ed8d",
+  "source_step2_recipe_sha256": "c108c180157ce5cc6bcde55df731d147fa8d8cf8c8a78273a526056171dfdfbe",
+  "source_recipe_commit": "4b32839537a0253c030754b70c6364d33fb58652"
+}

@@ -1,0 +1,392 @@
+{
+  "recipe": "beam_step1_v1",
+  "device": "cuda:0",
+  "actual_physics": {
+    "native": {
+      "solver": 2,
+      "integrator": 3,
+      "cone": 1,
+      "iterations": 100,
+      "ls_iterations": 50
+    },
+    "warp": {
+      "solver": 2,
+      "integrator": 3,
+      "cone": 1,
+      "iterations": 100,
+      "ls_iterations": 50
+    },
+    "sdf_initpoints": 50,
+    "sdf_iterations": 10,
+    "physics_dt": 0.008333333333333333,
+    "impratio": 10.0,
+    "decimation": 2,
+    "num_envs": 6,
+    "device": "cuda:0",
+    "nconmax": 512,
+    "njmax": 2048,
+    "manipulated_parts": {
+      "object/object": {
+        "mass_kg": 0.06857,
+        "inertia_kg_m2": [
+          0.0002249660460890675,
+          0.00022352679999997662,
+          1.3221093910955909e-05
+        ],
+        "center_of_mass_m": [
+          0.002767,
+          -0.0,
+          3.4e-05
+        ]
+      }
+    },
+    "writes_simulation_state": false
+  },
+  "updates": [
+    {
+      "epoch": 1,
+      "transitions": 24,
+      "wall_seconds": 1.339371652342379,
+      "learning_rate": 0.0001,
+      "block_episodes": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "block_completed": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "block_goal_counts": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "block_previous_goal_fraction": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "block_previous_all_goals_hit": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "block_previous_fall_ratio": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "actor_aux_value_loss": true,
+      "block_mean_reward": [
+        -0.08673509955406189,
+        -0.08901814371347427,
+        0.016815247014164925,
+        0.041536055505275726,
+        0.49052828550338745,
+        -0.03805408626794815
+      ],
+      "central_value_learning_rate": 0.0001,
+      "block_insertion_world_counts": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "block_previous_insertion_goal_fraction": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "previous_insertion_goal_fraction": 0.0,
+      "block_previous_insertion_all_goals_hit": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "previous_insertion_all_goals_hit": 0.0,
+      "block_previous_insertion_fall_ratio": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "previous_insertion_fall_ratio": 0.0,
+      "cuda_peak_allocated_bytes": 238914560,
+      "cuda_peak_reserved_bytes": 291504128,
+      "play_seconds": 0.16569924354553223,
+      "update_seconds": 0.23609447479248047,
+      "policy_loss": 0.05508763715624809,
+      "actor_value_loss": 8.063220977783203,
+      "entropy": 48.20547103881836,
+      "kl": 0.5810500383377075,
+      "invalid_world_resets": 0,
+      "task_progress": {
+        "common_step_counter": 4
+      },
+      "resource_status": {
+        "gpu_free_bytes": 23872995328,
+        "gpu_total_bytes": 25247481856,
+        "process_gpu_mib": 982,
+        "stop_reason": null
+      },
+      "target_duty_cycle": 1.0,
+      "planned_idle_seconds": 0.0,
+      "physics_sample": {
+        "contacts_total": 173,
+        "max_world_constraints": 274,
+        "max_solver_iterations": 7,
+        "solver_limit_world_fraction": 0.0,
+        "scope": "last control of this rollout; not a substep peak"
+      },
+      "physics_peak": {
+        "contacts_total": 203,
+        "max_world_constraints": 454,
+        "max_solver_iterations": 8,
+        "overflow_flags": [],
+        "physics_substeps": 8,
+        "contact_capacity_total": 3072,
+        "constraint_capacity_per_world": 2048,
+        "scope": "peak over every physics substep in this rollout"
+      }
+    },
+    {
+      "epoch": 2,
+      "transitions": 48,
+      "wall_seconds": 1.1847930047661066,
+      "learning_rate": 4.4444444444444447e-05,
+      "block_episodes": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "block_completed": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "block_goal_counts": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "block_previous_goal_fraction": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "block_previous_all_goals_hit": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "block_previous_fall_ratio": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "actor_aux_value_loss": true,
+      "block_mean_reward": [
+        -0.05475562810897827,
+        0.11115707457065582,
+        0.14347927272319794,
+        -0.054209113121032715,
+        -0.0666109248995781,
+        0.08874371647834778
+      ],
+      "central_value_learning_rate": 0.0001,
+      "block_insertion_world_counts": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "block_previous_insertion_goal_fraction": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "previous_insertion_goal_fraction": 0.0,
+      "block_previous_insertion_all_goals_hit": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "previous_insertion_all_goals_hit": 0.0,
+      "block_previous_insertion_fall_ratio": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "previous_insertion_fall_ratio": 0.0,
+      "cuda_peak_allocated_bytes": 239768576,
+      "cuda_peak_reserved_bytes": 293601280,
+      "play_seconds": 0.1519005298614502,
+      "update_seconds": 0.23195505142211914,
+      "policy_loss": 0.19604957103729248,
+      "actor_value_loss": 7.745023250579834,
+      "entropy": 48.20635223388672,
+      "kl": 10.971384048461914,
+      "invalid_world_resets": 0,
+      "task_progress": {
+        "common_step_counter": 8
+      },
+      "resource_status": {
+        "gpu_free_bytes": 23870898176,
+        "gpu_total_bytes": 25247481856,
+        "process_gpu_mib": 984,
+        "stop_reason": null
+      },
+      "target_duty_cycle": 1.0,
+      "planned_idle_seconds": 0.0,
+      "physics_sample": {
+        "contacts_total": 157,
+        "max_world_constraints": 208,
+        "max_solver_iterations": 4,
+        "solver_limit_world_fraction": 0.0,
+        "scope": "last control of this rollout; not a substep peak"
+      },
+      "physics_peak": {
+        "contacts_total": 157,
+        "max_world_constraints": 202,
+        "max_solver_iterations": 8,
+        "overflow_flags": [],
+        "physics_substeps": 8,
+        "contact_capacity_total": 3072,
+        "constraint_capacity_per_world": 2048,
+        "scope": "peak over every physics substep in this rollout"
+      }
+    }
+  ],
+  "resume_proof": {
+    "scope": "Extend full learner restoration checks to curriculum and random-number state.",
+    "checks": {
+      "generic_learner_restore_passed": true,
+      "task_progress_exact_on_resume": true,
+      "random_number_states_exact_on_resume": true,
+      "task_contract_preserved": true,
+      "one_update_advances_epoch": true,
+      "one_update_advances_rollout": true,
+      "control_counter_advances_by_horizon": true,
+      "fixed_random_goal_mask_preserved": true,
+      "both_optimizers_update": true,
+      "both_optimizers_finite": true
+    },
+    "random_number_state_checks": {
+      "torch_rng": true,
+      "numpy_rng": true,
+      "python_rng": true,
+      "cuda_rng": true
+    },
+    "optimizer_checks": {
+      "actor": {
+        "all_updated": true,
+        "step_advances": [
+          2.0
+        ],
+        "finite": true
+      },
+      "critic": {
+        "all_updated": true,
+        "step_advances": [
+          2.0
+        ],
+        "finite": true
+      }
+    },
+    "task_progress": [
+      {
+        "common_step_counter": 4
+      },
+      {
+        "common_step_counter": 4
+      },
+      {
+        "common_step_counter": 8
+      }
+    ],
+    "random_goal_worlds": 0,
+    "total_worlds": 6,
+    "mixed_precision": true,
+    "cuda_rng_was_saved": true,
+    "amp_scale_before": 2048.0,
+    "epochs": [
+      1,
+      1,
+      2
+    ],
+    "transitions": [
+      24,
+      24,
+      48
+    ],
+    "passed": true,
+    "generic_report": "runs/release_qualified_cuda/beam_step1_v1/resume_learner.json",
+    "input_sha256": {
+      "runs/release_qualified_cuda/beam_step1_v1/initial/checkpoint_00000001.pth": "713c03bc48f4a13d6d2680a94a96c1166d185dc35c64781d7e310e9a3a02c858",
+      "runs/release_qualified_cuda/beam_step1_v1/resumed/checkpoint_00000001.pth": "d64bb92670c6f8de233fa520f1455f07cc0b7f958161f7e1bae562cd6af6eeef",
+      "runs/release_qualified_cuda/beam_step1_v1/resumed/checkpoint_00000002.pth": "82e8dbd21938fa24f066f99a1ac4d74d73375c9494afb76506b4a2aa44de545f"
+    },
+    "checker_sha256": "5fba91b90f5ed25c1a0791b0ff9357f36a3f571a999033c3a10d4210b32c7a62"
+  },
+  "task_success_measured": false,
+  "passed": true
+}

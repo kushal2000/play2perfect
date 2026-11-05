@@ -1,0 +1,384 @@
+{
+  "recipe": "beam_step2_v1",
+  "device": "cpu",
+  "actual_physics": {
+    "native": {
+      "solver": 2,
+      "integrator": 3,
+      "cone": 1,
+      "iterations": 100,
+      "ls_iterations": 50
+    },
+    "warp": {
+      "solver": 2,
+      "integrator": 3,
+      "cone": 1,
+      "iterations": 100,
+      "ls_iterations": 50
+    },
+    "sdf_initpoints": 50,
+    "sdf_iterations": 10,
+    "physics_dt": 0.008333333333333333,
+    "impratio": 10.0,
+    "decimation": 2,
+    "num_envs": 6,
+    "device": "cpu",
+    "nconmax": 512,
+    "njmax": 2048,
+    "manipulated_parts": {
+      "object/object": {
+        "mass_kg": 0.08598,
+        "inertia_kg_m2": [
+          0.0003414929,
+          0.0003401606,
+          2.311025e-05
+        ],
+        "center_of_mass_m": [
+          -0.0,
+          -0.000698,
+          -0.0
+        ]
+      }
+    },
+    "writes_simulation_state": false
+  },
+  "updates": [
+    {
+      "epoch": 1,
+      "transitions": 24,
+      "wall_seconds": 1.4925946220755577,
+      "learning_rate": 4.4444444444444447e-05,
+      "block_episodes": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "block_completed": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "block_goal_counts": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "block_previous_goal_fraction": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "block_previous_all_goals_hit": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "block_previous_fall_ratio": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "actor_aux_value_loss": true,
+      "block_mean_reward": [
+        -0.05591069906949997,
+        1.5423331260681152,
+        0.2194756269454956,
+        -0.08878156542778015,
+        -0.0689699649810791,
+        0.30092889070510864
+      ],
+      "central_value_learning_rate": 0.0001,
+      "block_insertion_world_counts": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "block_previous_insertion_goal_fraction": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "previous_insertion_goal_fraction": 0.0,
+      "block_previous_insertion_all_goals_hit": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "previous_insertion_all_goals_hit": 0.0,
+      "block_previous_insertion_fall_ratio": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "previous_insertion_fall_ratio": 0.0,
+      "play_seconds": 0.30274462699890137,
+      "update_seconds": 0.17050862312316895,
+      "policy_loss": 0.11874088644981384,
+      "actor_value_loss": 8.530851364135742,
+      "entropy": 48.205894470214844,
+      "kl": 4.556612014770508,
+      "invalid_world_resets": 0,
+      "task_progress": {
+        "common_step_counter": 4
+      },
+      "resource_status": {
+        "process_gpu_mib": null,
+        "stop_reason": null
+      },
+      "target_duty_cycle": 1.0,
+      "planned_idle_seconds": 0.0,
+      "physics_sample": {
+        "contacts_total": 24,
+        "max_world_constraints": 64,
+        "max_solver_iterations": 5,
+        "solver_limit_world_fraction": 0.0,
+        "scope": "last control of this rollout; not a substep peak"
+      },
+      "physics_peak": {
+        "contacts_total": 34,
+        "max_world_constraints": 79,
+        "max_solver_iterations": 14,
+        "overflow_flags": [],
+        "physics_substeps": 8,
+        "contact_capacity_total": 3072,
+        "constraint_capacity_per_world": 2048,
+        "scope": "peak over every physics substep in this rollout"
+      }
+    },
+    {
+      "epoch": 2,
+      "transitions": 48,
+      "wall_seconds": 1.4951049331575632,
+      "learning_rate": 1.9753086419753087e-05,
+      "block_episodes": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "block_completed": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "block_goal_counts": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "block_previous_goal_fraction": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "block_previous_all_goals_hit": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "block_previous_fall_ratio": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "actor_aux_value_loss": true,
+      "block_mean_reward": [
+        0.25109243392944336,
+        -0.02634335681796074,
+        0.018994200974702835,
+        0.15848547220230103,
+        0.7286577224731445,
+        0.13936573266983032
+      ],
+      "central_value_learning_rate": 0.0001,
+      "block_insertion_world_counts": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "block_previous_insertion_goal_fraction": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "previous_insertion_goal_fraction": 0.0,
+      "block_previous_insertion_all_goals_hit": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "previous_insertion_all_goals_hit": 0.0,
+      "block_previous_insertion_fall_ratio": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "previous_insertion_fall_ratio": 0.0,
+      "play_seconds": 0.36296796798706055,
+      "update_seconds": 0.1624763011932373,
+      "policy_loss": 0.033730439841747284,
+      "actor_value_loss": 8.16836929321289,
+      "entropy": 48.206626892089844,
+      "kl": 3.5403847694396973,
+      "invalid_world_resets": 0,
+      "task_progress": {
+        "common_step_counter": 8
+      },
+      "resource_status": {
+        "process_gpu_mib": null,
+        "stop_reason": null
+      },
+      "target_duty_cycle": 1.0,
+      "planned_idle_seconds": 0.0,
+      "physics_sample": {
+        "contacts_total": 110,
+        "max_world_constraints": 155,
+        "max_solver_iterations": 11,
+        "solver_limit_world_fraction": 0.0,
+        "scope": "last control of this rollout; not a substep peak"
+      },
+      "physics_peak": {
+        "contacts_total": 137,
+        "max_world_constraints": 286,
+        "max_solver_iterations": 13,
+        "overflow_flags": [],
+        "physics_substeps": 8,
+        "contact_capacity_total": 3072,
+        "constraint_capacity_per_world": 2048,
+        "scope": "peak over every physics substep in this rollout"
+      }
+    }
+  ],
+  "resume_proof": {
+    "scope": "Extend full learner restoration checks to curriculum and random-number state.",
+    "checks": {
+      "generic_learner_restore_passed": true,
+      "task_progress_exact_on_resume": true,
+      "random_number_states_exact_on_resume": true,
+      "task_contract_preserved": true,
+      "one_update_advances_epoch": true,
+      "one_update_advances_rollout": true,
+      "control_counter_advances_by_horizon": true,
+      "fixed_random_goal_mask_preserved": true,
+      "both_optimizers_update": true,
+      "both_optimizers_finite": true
+    },
+    "random_number_state_checks": {
+      "torch_rng": true,
+      "numpy_rng": true,
+      "python_rng": true,
+      "cuda_rng": true
+    },
+    "optimizer_checks": {
+      "actor": {
+        "all_updated": true,
+        "step_advances": [
+          2.0
+        ],
+        "finite": true
+      },
+      "critic": {
+        "all_updated": true,
+        "step_advances": [
+          2.0
+        ],
+        "finite": true
+      }
+    },
+    "task_progress": [
+      {
+        "common_step_counter": 4
+      },
+      {
+        "common_step_counter": 4
+      },
+      {
+        "common_step_counter": 8
+      }
+    ],
+    "random_goal_worlds": 0,
+    "total_worlds": 6,
+    "mixed_precision": false,
+    "cuda_rng_was_saved": false,
+    "amp_scale_before": null,
+    "epochs": [
+      1,
+      1,
+      2
+    ],
+    "transitions": [
+      24,
+      24,
+      48
+    ],
+    "passed": true,
+    "generic_report": "runs/release_qualified_cpu/beam_step2_v1/resume_learner.json",
+    "input_sha256": {
+      "runs/release_qualified_cpu/beam_step2_v1/initial/checkpoint_00000001.pth": "7d17f7598ec2ae214e6b24e5741ea1a56b697bf129ec9b5de484810db9ac46ed",
+      "runs/release_qualified_cpu/beam_step2_v1/resumed/checkpoint_00000001.pth": "c89a67a6bf12cfe730cea38907707e7510e6f63d812989ba440bbfde541aad98",
+      "runs/release_qualified_cpu/beam_step2_v1/resumed/checkpoint_00000002.pth": "354ba359b3c0a2846c41ec2bc00ad3a32c9d9a3143f25d57e118f9324a69e6f5"
+    },
+    "checker_sha256": "5fba91b90f5ed25c1a0791b0ff9357f36a3f571a999033c3a10d4210b32c7a62"
+  },
+  "task_success_measured": false,
+  "passed": true
+}

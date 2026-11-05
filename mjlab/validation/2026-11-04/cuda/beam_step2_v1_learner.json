@@ -1,0 +1,39 @@
+{
+  "actor_exact_on_resume": true,
+  "critic_exact_on_resume": true,
+  "actor_optimizer_exact_on_resume": true,
+  "critic_optimizer_exact_on_resume": true,
+  "grad_scaler_exact_on_resume": true,
+  "environment_parameters_exact_on_resume": true,
+  "fresh_observation_on_resume": true,
+  "fresh_hidden_on_resume": true,
+  "epochs": [
+    1,
+    1,
+    2
+  ],
+  "transitions": [
+    24,
+    24,
+    48
+  ],
+  "central_value_epochs": [
+    1,
+    1,
+    2
+  ],
+  "actor_value_head_changed": true,
+  "finite_parameters": true,
+  "actor_optimizer_steps": [
+    3.0
+  ],
+  "critic_optimizer_steps": [
+    4.0
+  ],
+  "grad_scaler_scales": [
+    2048.0,
+    2048.0,
+    2048.0
+  ],
+  "passed": true
+}

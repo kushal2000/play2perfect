@@ -1,0 +1,1273 @@
+{
+  "passed": true,
+  "scope": "Verify closed public-package execution against all archived research outcomes.",
+  "release_commit": "513541a25fb4af3602749661fdbb1a78d54443db",
+  "checkpoint_sha256": "241d4b8b60216997c864ad28a561ff4072663391b7b2941e4decba1929bd1897",
+  "clean_endpoints": 96,
+  "all_goals": 115,
+  "source_withdrawn": 114,
+  "denominator": 128,
+  "early_ends": 3,
+  "unfinished": 0,
+  "result_fields_exact": [
+    "action_sampling",
+    "all_goals_hit_rate",
+    "backend",
+    "bundle_reference_policy",
+    "checkpoint_sha256",
+    "collision_capacity",
+    "conditioning",
+    "contact_free_withdrawal_rate",
+    "contact_free_withdrawn",
+    "contact_scope",
+    "controls",
+    "effective_block_ids",
+    "final_keypoint_error_m",
+    "first_episodes_ended",
+    "goal_counts",
+    "goal_fraction",
+    "initial_qpos",
+    "initial_qvel",
+    "manifest_sha256",
+    "n_early_ends_discarded",
+    "n_unfinished",
+    "n_valid_first_episodes",
+    "num_envs",
+    "onnx_sha256",
+    "peak_constraints",
+    "peak_contacts",
+    "policy_provenance",
+    "release_metric_scope",
+    "scope",
+    "seed",
+    "task_contract",
+    "terminal_penetrating_robot_object_contacts",
+    "tf32",
+    "unfinished_control_counts",
+    "unfinished_goal_counts",
+    "withdrawal_rate",
+    "withdrawn"
+  ],
+  "expected_provenance_differences": [
+    "release_postprocessor_sha256",
+    "release_recording_sha256",
+    "runtime",
+    "script_sha256",
+    "wall_seconds"
+  ],
+  "physics_peak": {
+    "contacts_total": 2002,
+    "max_world_constraints": 245,
+    "max_solver_iterations": 19,
+    "overflow_flags": [],
+    "physics_substeps": 10000,
+    "contact_capacity_total": 65536,
+    "constraint_capacity_per_world": 2048,
+    "scope": "Peak over every physics substep and forward refresh",
+    "forward_refreshes": 2001
+  },
+  "model_options": {
+    "solver_enum": 2,
+    "warp_solver_enum": 2,
+    "iterations": 100,
+    "ls_iterations": 50,
+    "timestep": 0.0016666666666666668,
+    "sdf_initpoints": 10
+  },
+  "first_attempt_recording_and_model_exact": [
+    "poses.npz",
+    "poses.mjb"
+  ],
+  "process_returncode": 0,
+  "process_elapsed_seconds": 2990.942401379347,
+  "limitation": "Frozen final actor evaluation reproduces the research cohort. This is not fresh full-scale training from the extracted package, a sustained-release score, or hardware validation. The first controller lost its exit receipt; this repeat preserves exit0 and matches its recorded states exactly.",
+  "runtime_versions": {
+    "mjlab": "1.6.0",
+    "mujoco": "3.12.0",
+    "mujoco-warp": "3.12.0",
+    "warp-lang": "1.18.0",
+    "torch": "2.14.0+cpu",
+    "onnxruntime": "1.24.3",
+    "rl-games": "1.6.1"
+  },
+  "frames": {
+    "research_frames_exact": 152,
+    "recorded_fields_exact": [
+      "active_worlds",
+      "control",
+      "ctrl",
+      "distance_m",
+      "eq_active",
+      "goal_index",
+      "handoff_step",
+      "mocap_pos",
+      "mocap_quat",
+      "qpos",
+      "qvel",
+      "release_remaining",
+      "reward_target_distance_m",
+      "robot_object_max_penetration_m",
+      "robot_object_penetrating_contacts",
+      "stage_index",
+      "terminal_worlds"
+    ],
+    "worlds_per_frame": 128
+  },
+  "visually_reviewed": true,
+  "operational_note": "During the repeat, CPU affinity moved from logical core 13 to 14 to avoid sharing a physical core with another evaluation. The change was recorded before application. Source, physics, seeds, limits and exact comparison criteria stayed unchanged. This is not a timing benchmark.",
+  "training_provenance": "Original Isaac Gym SimToolReal play foundation, then 1B steps of MJLab research fine-tuning. Frozen final actor evaluated by the extracted public package. No Isaac Lab fine-tuned actor initialization.",
+  "worlds": [
+    {
+      "world": 0,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": false,
+      "controls": 344,
+      "final_keypoint_error_m": 0.006853628437966108,
+      "terminal_robot_object_contacts": 3
+    },
+    {
+      "world": 1,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 407,
+      "final_keypoint_error_m": 0.0023140369448810816,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 2,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 353,
+      "final_keypoint_error_m": 0.005750537384301424,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 3,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 365,
+      "final_keypoint_error_m": 0.0049232072196900845,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 4,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 428,
+      "final_keypoint_error_m": 0.004965519066900015,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 5,
+      "goals": 0,
+      "source_withdrawn": false,
+      "clean_endpoint": false,
+      "controls": 149,
+      "final_keypoint_error_m": 0.8634833693504333,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 6,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 367,
+      "final_keypoint_error_m": 0.006308859214186668,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 7,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 318,
+      "final_keypoint_error_m": 0.0034544768277555704,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 8,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 434,
+      "final_keypoint_error_m": 0.0032886534463614225,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 9,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 329,
+      "final_keypoint_error_m": 0.005925275385379791,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 10,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 404,
+      "final_keypoint_error_m": 0.0020432802848517895,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 11,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 502,
+      "final_keypoint_error_m": 0.0038744225166738033,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 12,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": false,
+      "controls": 572,
+      "final_keypoint_error_m": 0.006373939570039511,
+      "terminal_robot_object_contacts": 4
+    },
+    {
+      "world": 13,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 315,
+      "final_keypoint_error_m": 0.0026229240465909243,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 14,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 694,
+      "final_keypoint_error_m": 0.004031050018966198,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 15,
+      "goals": 0,
+      "source_withdrawn": false,
+      "clean_endpoint": false,
+      "controls": 37,
+      "final_keypoint_error_m": 0.8060628771781921,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 16,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 329,
+      "final_keypoint_error_m": 0.006913499906659126,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 17,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 410,
+      "final_keypoint_error_m": 0.007328339386731386,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 18,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": false,
+      "controls": 401,
+      "final_keypoint_error_m": 0.00596058601513505,
+      "terminal_robot_object_contacts": 6
+    },
+    {
+      "world": 19,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 408,
+      "final_keypoint_error_m": 0.006090710870921612,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 20,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": false,
+      "controls": 317,
+      "final_keypoint_error_m": 0.007296328898519278,
+      "terminal_robot_object_contacts": 6
+    },
+    {
+      "world": 21,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 310,
+      "final_keypoint_error_m": 0.007491388823837042,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 22,
+      "goals": 0,
+      "source_withdrawn": false,
+      "clean_endpoint": false,
+      "controls": 247,
+      "final_keypoint_error_m": 0.8251712918281555,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 23,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 374,
+      "final_keypoint_error_m": 0.004856717307120562,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 24,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 466,
+      "final_keypoint_error_m": 0.00744963763281703,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 25,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 384,
+      "final_keypoint_error_m": 0.0018839790718629956,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 26,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 407,
+      "final_keypoint_error_m": 0.00314890849404037,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 27,
+      "goals": 0,
+      "source_withdrawn": false,
+      "clean_endpoint": false,
+      "controls": 600,
+      "final_keypoint_error_m": 0.15616659820079803,
+      "terminal_robot_object_contacts": 7
+    },
+    {
+      "world": 28,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 411,
+      "final_keypoint_error_m": 0.0045456537045538425,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 29,
+      "goals": 0,
+      "source_withdrawn": false,
+      "clean_endpoint": false,
+      "controls": 57,
+      "final_keypoint_error_m": 0.8981443643569946,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 30,
+      "goals": 6,
+      "source_withdrawn": false,
+      "clean_endpoint": false,
+      "controls": 468,
+      "final_keypoint_error_m": 0.7929642200469971,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 31,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 383,
+      "final_keypoint_error_m": 0.005309571046382189,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 32,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 358,
+      "final_keypoint_error_m": 0.00460083456709981,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 33,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 408,
+      "final_keypoint_error_m": 0.006531319115310907,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 34,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 639,
+      "final_keypoint_error_m": 0.003382682101801038,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 35,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 390,
+      "final_keypoint_error_m": 0.001759422942996025,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 36,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 537,
+      "final_keypoint_error_m": 0.00714384438470006,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 37,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 352,
+      "final_keypoint_error_m": 0.003272285219281912,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 38,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 309,
+      "final_keypoint_error_m": 0.005539878271520138,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 39,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 399,
+      "final_keypoint_error_m": 0.0059664384461939335,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 40,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 339,
+      "final_keypoint_error_m": 0.002878559986129403,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 41,
+      "goals": 0,
+      "source_withdrawn": false,
+      "clean_endpoint": false,
+      "controls": 266,
+      "final_keypoint_error_m": 1.224655032157898,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 42,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 322,
+      "final_keypoint_error_m": 0.005888262297958136,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 43,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 410,
+      "final_keypoint_error_m": 0.007257263176143169,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 44,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 405,
+      "final_keypoint_error_m": 0.007344838231801987,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 45,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": false,
+      "controls": 654,
+      "final_keypoint_error_m": 0.0063387504778802395,
+      "terminal_robot_object_contacts": 5
+    },
+    {
+      "world": 46,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": false,
+      "controls": 417,
+      "final_keypoint_error_m": 0.006564171984791756,
+      "terminal_robot_object_contacts": 6
+    },
+    {
+      "world": 47,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 309,
+      "final_keypoint_error_m": 0.005612870212644339,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 48,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 380,
+      "final_keypoint_error_m": 0.006796990055590868,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 49,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 552,
+      "final_keypoint_error_m": 0.00737254973500967,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 50,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 408,
+      "final_keypoint_error_m": 0.003643185365945101,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 51,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 536,
+      "final_keypoint_error_m": 0.0070799835957586765,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 52,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 335,
+      "final_keypoint_error_m": 0.004630426876246929,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 53,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 431,
+      "final_keypoint_error_m": 0.0026175796519964933,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 54,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 490,
+      "final_keypoint_error_m": 0.00282317609526217,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 55,
+      "goals": 0,
+      "source_withdrawn": false,
+      "clean_endpoint": false,
+      "controls": 36,
+      "final_keypoint_error_m": 0.7554231882095337,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 56,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 578,
+      "final_keypoint_error_m": 0.002202570904046297,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 57,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 503,
+      "final_keypoint_error_m": 0.00699838949367404,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 58,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": false,
+      "controls": 422,
+      "final_keypoint_error_m": 0.0024627414532005787,
+      "terminal_robot_object_contacts": 1
+    },
+    {
+      "world": 59,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 503,
+      "final_keypoint_error_m": 0.006799202878028154,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 60,
+      "goals": 0,
+      "source_withdrawn": false,
+      "clean_endpoint": false,
+      "controls": 600,
+      "final_keypoint_error_m": 0.12441357970237732,
+      "terminal_robot_object_contacts": 11
+    },
+    {
+      "world": 61,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": false,
+      "controls": 306,
+      "final_keypoint_error_m": 0.0026370766572654247,
+      "terminal_robot_object_contacts": 1
+    },
+    {
+      "world": 62,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 308,
+      "final_keypoint_error_m": 0.006232771556824446,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 63,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 405,
+      "final_keypoint_error_m": 0.0073370179161429405,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 64,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 317,
+      "final_keypoint_error_m": 0.002787132514640689,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 65,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 494,
+      "final_keypoint_error_m": 0.005837240256369114,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 66,
+      "goals": 0,
+      "source_withdrawn": false,
+      "clean_endpoint": false,
+      "controls": 600,
+      "final_keypoint_error_m": 0.425252228975296,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 67,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 318,
+      "final_keypoint_error_m": 0.005319492891430855,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 68,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 520,
+      "final_keypoint_error_m": 0.006065670866519213,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 69,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 436,
+      "final_keypoint_error_m": 0.007165791932493448,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 70,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": false,
+      "controls": 366,
+      "final_keypoint_error_m": 0.006497375667095184,
+      "terminal_robot_object_contacts": 1
+    },
+    {
+      "world": 71,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 348,
+      "final_keypoint_error_m": 0.006678592413663864,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 72,
+      "goals": 1,
+      "source_withdrawn": false,
+      "clean_endpoint": false,
+      "controls": 742,
+      "final_keypoint_error_m": 0.012882690876722336,
+      "terminal_robot_object_contacts": 12
+    },
+    {
+      "world": 73,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 398,
+      "final_keypoint_error_m": 0.003908549901098013,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 74,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": false,
+      "controls": 558,
+      "final_keypoint_error_m": 0.006705323699861765,
+      "terminal_robot_object_contacts": 12
+    },
+    {
+      "world": 75,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 333,
+      "final_keypoint_error_m": 0.006603098940104246,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 76,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 390,
+      "final_keypoint_error_m": 0.003778788959607482,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 77,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": false,
+      "controls": 489,
+      "final_keypoint_error_m": 0.007227225229144096,
+      "terminal_robot_object_contacts": 1
+    },
+    {
+      "world": 78,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 346,
+      "final_keypoint_error_m": 0.00287533993832767,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 79,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 351,
+      "final_keypoint_error_m": 0.0027464532759040594,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 80,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 418,
+      "final_keypoint_error_m": 0.005467998329550028,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 81,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 531,
+      "final_keypoint_error_m": 0.0045934622175991535,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 82,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": false,
+      "controls": 465,
+      "final_keypoint_error_m": 0.002986922627314925,
+      "terminal_robot_object_contacts": 1
+    },
+    {
+      "world": 83,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 326,
+      "final_keypoint_error_m": 0.0025052488781511784,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 84,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 304,
+      "final_keypoint_error_m": 0.003826736705377698,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 85,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": false,
+      "controls": 344,
+      "final_keypoint_error_m": 0.006377828773111105,
+      "terminal_robot_object_contacts": 6
+    },
+    {
+      "world": 86,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 371,
+      "final_keypoint_error_m": 0.0025210934691131115,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 87,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 460,
+      "final_keypoint_error_m": 0.002227787161245942,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 88,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 371,
+      "final_keypoint_error_m": 0.007070304825901985,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 89,
+      "goals": 0,
+      "source_withdrawn": false,
+      "clean_endpoint": false,
+      "controls": 198,
+      "final_keypoint_error_m": 0.8206128478050232,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 90,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 402,
+      "final_keypoint_error_m": 0.004343473352491856,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 91,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 340,
+      "final_keypoint_error_m": 0.00321117602288723,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 92,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 299,
+      "final_keypoint_error_m": 0.003708481788635254,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 93,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 413,
+      "final_keypoint_error_m": 0.002480495721101761,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 94,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 294,
+      "final_keypoint_error_m": 0.005364059936255217,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 95,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 340,
+      "final_keypoint_error_m": 0.0047571915201842785,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 96,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 331,
+      "final_keypoint_error_m": 0.003150450997054577,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 97,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 317,
+      "final_keypoint_error_m": 0.0024628646206110716,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 98,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 372,
+      "final_keypoint_error_m": 0.004269765689969063,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 99,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 367,
+      "final_keypoint_error_m": 0.005655385088175535,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 100,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 420,
+      "final_keypoint_error_m": 0.004405831452459097,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 101,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 427,
+      "final_keypoint_error_m": 0.004154370166361332,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 102,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": false,
+      "controls": 320,
+      "final_keypoint_error_m": 0.0026826763059943914,
+      "terminal_robot_object_contacts": 3
+    },
+    {
+      "world": 103,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": false,
+      "controls": 319,
+      "final_keypoint_error_m": 0.0017077660886570811,
+      "terminal_robot_object_contacts": 2
+    },
+    {
+      "world": 104,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 344,
+      "final_keypoint_error_m": 0.0037458359729498625,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 105,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": false,
+      "controls": 357,
+      "final_keypoint_error_m": 0.005774770863354206,
+      "terminal_robot_object_contacts": 8
+    },
+    {
+      "world": 106,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": false,
+      "controls": 392,
+      "final_keypoint_error_m": 0.005881809629499912,
+      "terminal_robot_object_contacts": 2
+    },
+    {
+      "world": 107,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 299,
+      "final_keypoint_error_m": 0.004954996053129435,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 108,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 413,
+      "final_keypoint_error_m": 0.0073801688849925995,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 109,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": false,
+      "controls": 396,
+      "final_keypoint_error_m": 0.007363715674728155,
+      "terminal_robot_object_contacts": 3
+    },
+    {
+      "world": 110,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 338,
+      "final_keypoint_error_m": 0.003780395956709981,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 111,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 370,
+      "final_keypoint_error_m": 0.004968227818608284,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 112,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 505,
+      "final_keypoint_error_m": 0.007463796995580196,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 113,
+      "goals": 10,
+      "source_withdrawn": false,
+      "clean_endpoint": false,
+      "controls": 1000,
+      "final_keypoint_error_m": 0.011218822561204433,
+      "terminal_robot_object_contacts": 1
+    },
+    {
+      "world": 114,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 388,
+      "final_keypoint_error_m": 0.00649716891348362,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 115,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 315,
+      "final_keypoint_error_m": 0.007076852489262819,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 116,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 328,
+      "final_keypoint_error_m": 0.0019912400748580694,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 117,
+      "goals": 0,
+      "source_withdrawn": false,
+      "clean_endpoint": false,
+      "controls": 252,
+      "final_keypoint_error_m": 0.8883568048477173,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 118,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 396,
+      "final_keypoint_error_m": 0.005791650153696537,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 119,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 424,
+      "final_keypoint_error_m": 0.0039086840115487576,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 120,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 944,
+      "final_keypoint_error_m": 0.0033777873031795025,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 121,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 373,
+      "final_keypoint_error_m": 0.0031721689738333225,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 122,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 304,
+      "final_keypoint_error_m": 0.005711963865906,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 123,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 664,
+      "final_keypoint_error_m": 0.0015113379340618849,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 124,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 425,
+      "final_keypoint_error_m": 0.0025035759899765253,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 125,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 420,
+      "final_keypoint_error_m": 0.006042631808668375,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 126,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 387,
+      "final_keypoint_error_m": 0.0024646101519465446,
+      "terminal_robot_object_contacts": 0
+    },
+    {
+      "world": 127,
+      "goals": 10,
+      "source_withdrawn": true,
+      "clean_endpoint": true,
+      "controls": 436,
+      "final_keypoint_error_m": 0.002387430751696229,
+      "terminal_robot_object_contacts": 0
+    }
+  ]
+}

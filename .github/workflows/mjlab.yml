@@ -1,0 +1,47 @@
+name: MJLab package
+
+on:
+  pull_request:
+    paths: ['mjlab/**', '.github/workflows/mjlab.yml']
+  push:
+    paths: ['mjlab/**', '.github/workflows/mjlab.yml']
+  workflow_dispatch:
+    inputs:
+      learner_smoke:
+        description: Run all four CPU learner/resume checks
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  cpu:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: mjlab
+    env:
+      UV_PROJECT_ENVIRONMENT: ${{ github.workspace }}/mjlab/.venv-cpu
+      CUDA_VISIBLE_DEVICES: ''
+      MUJOCO_GL: disable
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
+        with:
+          version: '0.12.1'
+          python-version: '3.11'
+      - run: uv sync --locked --project environments/sapg-sdf-candidate-cpu
+      - run: uv run --no-sync --project environments/sapg-sdf-candidate-cpu ruff check scripts src tests
+      - run: uv run --no-sync --project environments/sapg-sdf-candidate-cpu ruff format --check scripts src tests
+      - run: uv run --no-sync --project environments/sapg-sdf-candidate-cpu p2p-mjlab-assets
+      - run: uv run --no-sync --project environments/sapg-sdf-candidate-cpu pytest -q
+      - run: uv build --wheel
+      - if: github.event_name == 'workflow_dispatch' && inputs.learner_smoke
+        run: |
+          uv run --no-sync --project environments/sapg-sdf-candidate-cpu p2p-mjlab-foundation
+          uv run --no-sync --project environments/sapg-sdf-candidate-cpu python scripts/prepare_warp_stabilization.py
+          uv run --no-sync --project environments/sapg-sdf-candidate-cpu python scripts/smoke_training.py --discard-intermediate-checkpoints

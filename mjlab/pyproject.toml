@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "play2perfect-mjlab"
+version = "0.1.0"
+description = "MJLab backend for Play2Perfect assembly fine-tuning"
+license = "MIT"
+license-files = ["LICENSE", "third_party/*LICENSE"]
+requires-python = ">=3.11,<3.12"
+dependencies = ["mujoco==3.12.0", "numpy>=2,<3", "onnxruntime==1.24.3"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.14"]
+
+[project.scripts]
+p2p-assets = "play2perfect_mjlab.assets:main"
+p2p-mjlab-assets = "play2perfect_mjlab.bundles:main"
+p2p-mjlab-foundation = "play2perfect_mjlab.foundation:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+play2perfect_mjlab = ["resources/configs/*.json", "resources/bundles/*.json", "resources/bundles/**/*.json", "resources/bundles/**/*.xml", "resources/bundles/**/*.obj"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]

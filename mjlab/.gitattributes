@@ -1,0 +1,3 @@
+# Preserve byte-identical reference assets and unified-diff context lines.
+patches/*.patch -whitespace
+src/play2perfect_mjlab/resources/bundles/**/scene.xml -whitespace
