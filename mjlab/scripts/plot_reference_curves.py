@@ -18,6 +18,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
+RESTART_DISPLAY_WARMUP = 100
+
 
 def trailing_mean(values, restarts, window=20):
     result, start = [], 0
@@ -86,11 +88,25 @@ def main():
         overview_axis.set_ylabel("Mean rollout reward")
         overview_axis.grid(alpha=0.2)
         smoothed_success = trailing_mean(ys[1], restarts)
+        display_success = smoothed_success.copy()
+        restart_gaps = []
+        for start in map(int, np.flatnonzero(restarts)):
+            stop = min(start + RESTART_DISPLAY_WARMUP, len(rows))
+            display_success[start:stop] = np.nan
+            restart_gaps.append(
+                {
+                    "first_epoch": int(columns["epoch"][start]),
+                    "last_epoch": int(columns["epoch"][stop - 1]),
+                    "updates": stop - int(start),
+                    "start_hours": float(xs[1][start]),
+                    "end_hours": float(xs[1][stop - 1]),
+                }
+            )
         for success_axis in (
             success_axes.flat[len(summary)],
             mobile_axes[len(summary)],
         ):
-            success_axis.plot(xs[1], smoothed_success, color="#216c62", linewidth=1.4)
+            success_axis.plot(xs[1], display_success, color="#216c62", linewidth=1.4)
             success_axis.set(
                 title=info["title"].replace("Beam stage", "Multipart assembly · stage"),
                 xlabel="Assembly Fine-tuning Time (hours)",
@@ -105,7 +121,7 @@ def main():
                     color="#888888",
                     linewidth=0.8,
                     linestyle=":",
-                    label="Session restart" if index == 0 else None,
+                    label="Resume · 100-update gap" if index == 0 else None,
                 )
             if restarts.any():
                 success_axis.legend(loc="lower right", fontsize=8)
@@ -117,6 +133,7 @@ def main():
             "final_raw_percent": float(ys[1][-1]),
             "training_hours": float(xs[1][-1]),
             "data_sha256": info["sha256"],
+            "restart_display_gaps": restart_gaps,
         }
     overview.suptitle("MJLab assembly fine-tuning from the pre-trained play policy")
     overview.savefig(args.output / "reward_overview.png", dpi=150)
@@ -132,6 +149,11 @@ def main():
             {
                 "metric": "Training all-goal completion, not clean-release evaluation",
                 "smoothing": "Trailing mean of up to 20 updates; reset per session",
+                "overview_display": "The first 100 updates after each recorded "
+                "resume are omitted as gaps. This fixed display rule removes "
+                "counter warm-up; it does not prove every world has completed an "
+                "episode by update 100. Initial training is retained. Detailed "
+                "plots, raw data, final values and peaks remain unfiltered.",
                 "time": manifest["time_definition"],
                 "runs": summary,
             },

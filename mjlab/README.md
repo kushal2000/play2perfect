@@ -29,8 +29,9 @@ checkpoint budgets, evaluation protocols and release-stability results.
 ![MJLab training success rates from the pre-trained play policy](docs/media/success_overview.png)
 
 Success here means all assembly goals reached during training. The curves use a
-20-update trailing mean and a 0–100% scale. Clean withdrawal is measured separately
-in the table above. [Reward curves and metric definitions](docs/REPRODUCING.md#reference-results)
+20-update trailing mean and a 0–100% scale. Short gaps omit the first 100 updates
+after each resume while episode counters refill. Clean withdrawal is measured
+separately in the table above. [Unfiltered curves and metric definitions](docs/REPRODUCING.md#reference-results)
 remain available.
 
 ## Install and prepare

@@ -30,7 +30,7 @@ require clean withdrawal or retention after release. The x-axis is
 | Multipart stage 1 | 89.1% | 90.5% |
 | Multipart stage 2 | 69.4% | 72.0% |
 
-These are the final and peak values of the plotted trailing mean, not frozen-policy
+These are the final and peak values of the unfiltered trailing mean, not frozen-policy
 test scores. All four tasks are shown. Raw values and exact summaries are available
 in the [reference data](reference/manifest.json) and [plot summary](media/success_summary.json).
 
@@ -43,7 +43,13 @@ in the [reference data](reference/manifest.json) and [plot summary](media/succes
 
 Each line uses a trailing mean of up to 20 updates, reset at each session boundary.
 The included compressed CSV files retain every accepted scalar without smoothing.
-The dotted lines mark session restarts; brief dips include reset episode counters.
+The overview leaves a gap for the first 100 updates after each recorded resume.
+The logger resets every world's previous-episode score to zero; counters refill
+as new episodes end. This fixed display rule removes that warm-up from the overview.
+It does not establish that every world has completed an episode by update 100.
+The initial learning curve is retained. Dotted lines mark the resumes. Detailed
+plots, raw CSVs and the final/peak table remain unfiltered; all other fluctuations
+remain visible. Each omitted epoch range is recorded in the plot summary.
 Reward is the shaped reward per control step, averaged over six equal-size SAPG
 blocks. It is not episode return. Each task has its own reward scale.
 
