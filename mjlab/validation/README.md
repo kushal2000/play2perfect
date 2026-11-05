@@ -1,5 +1,10 @@
 # Minimal release validation
 
+The [November 5 review](2026-11-05/review.json) rechecks all 32 tests, formatting,
+the wheel, documentation links and public video hashes. It updates the Long demo
+to 1B steps and removes historical planning material. Runtime code, dependency
+locks and recipes are unchanged from the qualification below.
+
 Checked November 4, 2026 on Linux, Python 3.11 and one RTX 4090. The tested
 learner implementation is commit `9ac320b`. Later changes add documentation,
 reference plots, and explicit evaluation history selection. Both environments use
@@ -24,8 +29,10 @@ Local environment installation reuses a package cache through hardlinks.
 | Reference plotting | All four full scalar histories verify and render on CPU |
 | GitHub CI | Fresh install, prepared assets, tests and wheel build pass |
 
-Public clean-install CI passes at `62b5a8f`:
-[41905455907](https://github.com/tylerlum/play2perfect/actions/runs/41905455907).
+The last pre-review clean-install CI passes at `a31211e`:
+[41908809158](https://github.com/tylerlum/play2perfect/actions/runs/41908809158).
+See [current release-branch runs](https://github.com/tylerlum/play2perfect/actions/workflows/mjlab.yml?query=branch%3Arelease%2Fmjlab-minimal-assembly)
+for checks on later documentation and media revisions.
 The workflow itself is included at
 [`../../.github/workflows/mjlab.yml`](../../.github/workflows/mjlab.yml).
 

@@ -124,7 +124,7 @@ The selected videos show different checkpoint budgets from some curve endpoints:
 
 | Demo | MJLab training before the shown checkpoint | Frozen cohort result | Selection |
 |---|---:|---|---|
-| Long-leg screwing | 51.02M | 77/128 contact-free withdrawal; source history | World 63 from preselected views 0/63/127 |
+| Long-leg screwing | 1,000.02M | 96/128 contact-free withdrawal; source history | World 127 from preselected views 0/63/127 |
 | Tight insertion | 1,002.33M | 16/32 contact-free endpoints; immediate feedback | Lowest-index clean success, world 0 |
 | Multipart | Stage 1: 100.41M; stage 2: 100.60M | Separate stages: 23/32 and 11/32; immediate feedback | One canonical composed sequence |
 
@@ -132,6 +132,15 @@ The tight reference actor released by Play2Perfect achieves 25/32 on the same
 cohort. Beam website references achieve 28/32 and 24/32 on those separate-stage
 cohorts. The MJLab learners are not uniformly better than the released actors.
 Endpoint contact checks do not establish later retention or sim-to-real transfer.
+
+The Long video uses a later checkpoint than the included 501.10M reference
+curve. To run that same recipe to the video's budget, change its command to
+`--max-epochs 40691` (1,000,022,016 transitions). The later research run reaches
+115/128 all-goal completions and 96/128 clean withdrawals; all 128 starts count,
+including three early failures. Its two-second passive release test, initialized
+with recorded solver warmstart, retains 54/96 goals during forced finger opening;
+46/96 also remain contact-free throughout. These separate diagnostics do not
+change the endpoint score. See the [video and result page](https://mjlab-dexterous-showcase-tyler-20261102.tylergwlum.chatgpt.site/presentation.html#long-leg-foundation1b).
 
 Multipart uses two separately trained policies. At handoff, it resets recurrent
 memory and fixes the first assembled part. The prepared stage and composed models

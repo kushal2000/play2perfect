@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "play2perfect-mjlab"
 version = "0.1.0"
-description = "Experimental MJLab backend for Play2Perfect assembly fine-tuning"
+description = "MJLab backend for Play2Perfect assembly fine-tuning"
 license = "MIT"
 license-files = ["LICENSE", "third_party/*LICENSE"]
 requires-python = ">=3.11,<3.12"

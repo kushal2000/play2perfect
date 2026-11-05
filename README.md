@@ -22,7 +22,7 @@ This repository provides:
 - **Two robot setups**, each with its own play and assembly environments and checkpoints
   (see [Robot setups](#robot-setups)).
 - **Training** code for both stages in Isaac Sim (Isaac Lab).
-- **Experimental MJLab assembly fine-tuning** for KUKA/Sharpa: long-leg screwing,
+- **MJLab assembly fine-tuning** for KUKA/Sharpa: long-leg screwing,
   tight insertion and two-stage beam assembly, with recorded demos and training curves.
 - **Interactive (viser) evaluation** for four assembly tasks plus two everyday-object
   insertions, using our released checkpoints, with a robot switch in the GUI.
@@ -31,7 +31,7 @@ This repository provides:
 | Backend | Robots | Scope | Start here |
 |---|---|---|---|
 | Isaac Lab | KUKA/Sharpa, Flexiv/Wuji | Play pretraining, assembly fine-tuning and evaluation | [Isaac Lab installation](docs/isaacsim_installation.md) |
-| MJLab (experimental) | KUKA/Sharpa | Assembly fine-tuning, evaluation and MuJoCo rendering | [MJLab guide](mjlab/README.md) · [training curves and reproduction](mjlab/docs/REPRODUCING.md) |
+| MJLab | KUKA/Sharpa | Assembly fine-tuning, evaluation and MuJoCo rendering | [MJLab guide](mjlab/README.md) · [training curves and reproduction](mjlab/docs/REPRODUCING.md) |
 
 ## Project structure
 
@@ -75,7 +75,7 @@ objects, finetuned from the same Stage-1 play policy with the same environment a
 | <img src="docs/media/tasks/fork_insertion.gif" width="220" alt="Fork into a flatware holder (YCB fork scan, handle first, 1 mm clearance)"> | Fork into a flatware holder (YCB fork scan, handle first, 1 mm clearance)<br><sub>shown on Flexiv + Wuji</sub> | Everyday object | `fork_insertion` |
 | <img src="docs/media/tasks/plug_insertion.gif" width="220" alt="USB-C wall plug into a power-strip socket (1.5 mm blades, 0.5 mm clearance)"> | USB-C wall plug into a power-strip socket (1.5 mm blades, 0.5 mm clearance)<br><sub>shown on Flexiv + Wuji</sub> | Everyday object | `plug_insertion` |
 
-## MJLab assembly demos (experimental)
+## MJLab assembly demos
 
 These policies start from the original SimToolReal play foundation, then fine-tune
 in MJLab. They do not inherit task-specific Isaac Lab assembly policies.
@@ -85,7 +85,7 @@ They are selected successful rollouts; cohort scores and limitations are in the
 
 | Demo | Task | MJLab fine-tuning shown |
 |:----:|---|---|
-| <img src="mjlab/docs/media/screwing.gif" width="220" alt="KUKA and Sharpa screw a long furniture leg in MJLab"> | Long-leg screwing | 51.02M transitions |
+| <img src="mjlab/docs/media/screwing.gif" width="220" alt="KUKA and Sharpa screw a long furniture leg in MJLab"> | Long-leg screwing | 1,000.02M transitions |
 | <img src="mjlab/docs/media/tight_insertion.gif" width="220" alt="KUKA and Sharpa insert an L-shaped peg in MJLab"> | Tight insertion | 1,002.33M transitions |
 | <img src="mjlab/docs/media/multipart.gif" width="220" alt="KUKA and Sharpa assemble two beam parts in MJLab"> | Two-stage beam assembly | 100.41M / 100.60M per stage; first part fixed at handoff |
 

@@ -5,7 +5,7 @@
     "screwing": {
       "inputs": {
         "model": "e73d41a294008670aa61dc16ed6b3a0e3d81fcea02da71e6733bb46e408a260b",
-        "recording": "553ecaf61c828c9e80308fb880014893000f9b2e9258b6f6c99060cc7f8174f1"
+        "recording": "791026fbaa53faaac39fa7cc7e4a7b68395a1cdb8c0b4b80aac0546991133aba"
       },
       "camera": {
         "azimuth": 145.0,
@@ -19,8 +19,8 @@
         "orthographic": false,
         "fovy": 38
       },
-      "controls": 752,
-      "recorded_motion_seconds": 12.533333333333333,
+      "controls": 436,
+      "recorded_motion_seconds": 7.266666666666667,
       "frozen_endpoint_hold_seconds": 1,
       "integration_steps": 0,
       "interpolation": false,
@@ -29,12 +29,15 @@
         800,
         800
       ],
-      "rendered_video_sha256": "52a3ecd81a55d3c2d76c563e54c8077947ed964956b11ae8598d80e7755d6403",
-      "checkpoint_sha256": "f1a5c487c42219dd9a326457dc1c37f5a32840397b90d4c75851826246976ef9",
-      "selected_world": 63,
+      "rendered_video_sha256": "c96cc8f59bcc9c3b982bf017a12d068090ab11b5bf348fad3c79e2e85e1fa055",
+      "checkpoint_sha256": "241d4b8b60216997c864ad28a561ff4072663391b7b2941e4decba1929bd1897",
+      "selected_world": 127,
       "gif": "screwing.gif",
-      "gif_sha256": "fd8634b7ccde96d98039a6cc08ef5b56bf8ae29366031ef3edd4239df03e943b",
-      "video_url": "https://mjlab-dexterous-showcase-tyler-20261102.tylergwlum.chatgpt.site/assets/mujoco-long-leg-foundation51m-reference.mp4"
+      "gif_sha256": "3009d46481aec9bdc2f7875552245947a2d4e43c4e58a9dcb2a2b67e8510d0b1",
+      "video_url": "https://mjlab-dexterous-showcase-tyler-20261102.tylergwlum.chatgpt.site/assets/mujoco-long-leg-foundation1b-reference.mp4",
+      "training_transitions": 1000022016,
+      "cohort_clean_withdrawals": 96,
+      "cohort_starts": 128
     },
     "tight_insertion": {
       "inputs": {

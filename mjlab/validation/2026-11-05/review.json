@@ -1,0 +1,44 @@
+{
+  "reviewed_utc": "2026-11-05T00:58:30.254983+00:00",
+  "base_head": "a31211ebd6d463a2004be8dbf858e90fc6eb8c71",
+  "change_scope": "Documentation, media and package description only. No simulator, learner, evaluation, recipe or dependency changes. Historical release planning files removed.",
+  "checks": {
+    "pytest_passed": 32,
+    "pytest_seconds": 5.32,
+    "ruff_check": "passed",
+    "ruff_format_files": 46,
+    "document_links_checked": 40,
+    "document_links_missing": 0,
+    "wheel_build": "passed",
+    "wheel_sha256": "90403539377b6265be61f7f3041c2b6de904079757537afdca00ef30c08ccab0",
+    "wheel_bytes": 237629
+  },
+  "videos": [
+    {
+      "task": "screwing",
+      "url": "https://mjlab-dexterous-showcase-tyler-20261102.tylergwlum.chatgpt.site/assets/mujoco-long-leg-foundation1b-reference.mp4",
+      "http_status": 200,
+      "sha256": "c96cc8f59bcc9c3b982bf017a12d068090ab11b5bf348fad3c79e2e85e1fa055",
+      "bytes": 931822
+    },
+    {
+      "task": "tight_insertion",
+      "url": "https://mjlab-dexterous-showcase-tyler-20261102.tylergwlum.chatgpt.site/assets/mujoco-tight-insertion-reference.mp4",
+      "http_status": 200,
+      "sha256": "e87d3db6a8ee529185b3458239743e37f397e66283bf4c3cd9101a9de2b0e423",
+      "bytes": 841054
+    },
+    {
+      "task": "multipart",
+      "url": "https://mjlab-dexterous-showcase-tyler-20261102.tylergwlum.chatgpt.site/assets/mujoco-multipart-front-wide.mp4",
+      "http_status": 200,
+      "sha256": "70de1b3930754887619358a4f917c8fe39f62942fadde098babe867e0f561cfd",
+      "bytes": 2501374
+    }
+  ],
+  "visual_review": {
+    "screwing_gif": "Reviewed start, middle and final frames; full arm and task remain visible.83frames at10fps;8.3seconds. Matches the1B reference-view movie.",
+    "gif_sha256": "3009d46481aec9bdc2f7875552245947a2d4e43c4e58a9dcb2a2b67e8510d0b1"
+  },
+  "qualification_scope": "Prior four-recipe CPU/CUDA update-and-resume evidence remains applicable to unchanged runtime code. This review does not add full-scale training reproduction from the extracted public package."
+}

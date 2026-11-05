@@ -1,10 +1,10 @@
 # Play2Perfect assembly fine-tuning in MJLab
 
-An experimental MJLab backend for KUKA iiwa 14 + Sharpa: long-leg screwing,
+An MJLab backend for KUKA iiwa 14 + Sharpa: long-leg screwing,
 tight insertion and two-stage beam assembly. Train from the original SimToolReal
 play foundation with the existing six-block recurrent SAPG learner.
 
-**Experimental backend; minimal release checks pass.** All four recipes complete
+**Four validated training recipes.** All four recipes complete
 real updates and exact learner restoration in isolated CPU and CUDA environments.
 Public downloads, scene reconstruction, evaluation, dense recording, rendering
 and plotting also pass. GitHub CI installs the package and builds its wheel.
@@ -13,7 +13,7 @@ These short checks do not establish full training-curve reproduction.
 
 The Isaac Lab backend remains in the parent repository. Upstream Flexiv/Wuji
 support applies to Isaac Lab; this MJLab package currently supports KUKA/Sharpa.
-See [the release plan](RELEASE_PLAN.md) for scope, estimates and upstream options.
+See [scope and limitations](#scope-and-limitations) for the supported setup.
 
 ## Task demos
 
@@ -24,7 +24,7 @@ states at 1× simulation time, without motion interpolation.
 
 | Demo | Task and recipe | Video / measured result |
 |:---:|---|---|
-| <img src="docs/media/screwing.gif" width="260" alt="Long-leg screwing with the full KUKA arm visible"> | Long-leg screwing<br>`long_leg_fine_v1` | [Video](https://mjlab-dexterous-showcase-tyler-20261102.tylergwlum.chatgpt.site/assets/mujoco-long-leg-foundation51m-reference.mp4)<br>51.02M steps; 77/128 clean withdrawal, source history |
+| <img src="docs/media/screwing.gif" width="260" alt="Long-leg screwing with the full KUKA arm visible"> | Long-leg screwing<br>`long_leg_fine_v1` | [Video](https://mjlab-dexterous-showcase-tyler-20261102.tylergwlum.chatgpt.site/assets/mujoco-long-leg-foundation1b-reference.mp4) · [Front view](https://mjlab-dexterous-showcase-tyler-20261102.tylergwlum.chatgpt.site/assets/mujoco-long-leg-foundation1b-front.mp4)<br>1,000.02M steps; 96/128 clean withdrawal, source history |
 | <img src="docs/media/tight_insertion.gif" width="260" alt="Tight L-peg insertion in native MuJoCo rendering"> | Tight insertion<br>`tight_stabilized_v1` | [Video](https://mjlab-dexterous-showcase-tyler-20261102.tylergwlum.chatgpt.site/assets/mujoco-tight-insertion-reference.mp4)<br>1,002.33M steps; 16/32 clean endpoints, immediate feedback |
 | <img src="docs/media/multipart.gif" width="260" alt="Two-part beam assembly, with the first part fixed at handoff"> | Multipart<br>`beam_step1_v1` + `beam_step2_v1` | [Front view](https://mjlab-dexterous-showcase-tyler-20261102.tylergwlum.chatgpt.site/assets/mujoco-multipart-front-wide.mp4) · [Reference view](https://mjlab-dexterous-showcase-tyler-20261102.tylergwlum.chatgpt.site/assets/mujoco-multipart-reference.mp4)<br>100.41M / 100.60M steps; one composed sequence |
 
@@ -232,6 +232,5 @@ training commands, exact budgets, hardware, raw curve data and video provenance.
 - Example videos are selected rollouts. Inspect cohort results and contact
   diagnostics before judging reliability or sim-to-real readiness.
 
-Suggested release wording is: “Play2Perfect assembly
-fine-tuning supports Isaac Lab and an experimental MJLab backend for
-KUKA/Sharpa.” This does not imply support for every robot or simulator.
+Play2Perfect assembly fine-tuning supports Isaac Lab and MJLab. The current
+MJLab robot is KUKA/Sharpa; Flexiv/Wuji support remains in Isaac Lab.
