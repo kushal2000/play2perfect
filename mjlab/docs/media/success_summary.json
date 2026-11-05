@@ -1,0 +1,39 @@
+{
+  "metric": "Training all-goal completion, not clean-release evaluation",
+  "smoothing": "Trailing mean of up to 20 updates; reset per session",
+  "time": "Warm training wall time: sum of first-to-last logged intervals within accepted sessions. Includes logged duty-cycle idle; excludes cold setup, queueing and unobserved restart gaps. Not end-to-end time.",
+  "runs": {
+    "long_leg_fine_v1": {
+      "title": "Long-leg screwing",
+      "final_percent": 89.7498169541359,
+      "peak_percent": 91.79477632045746,
+      "final_raw_percent": 88.68745565414429,
+      "training_hours": 13.886901820374186,
+      "data_sha256": "580a8f59286591e511b7e7c68a4e48b4f4bfb5fa23fd8712b1ebd3c7bcf6e12e"
+    },
+    "tight_stabilized_v1": {
+      "title": "Tight insertion",
+      "final_percent": 76.42252802848816,
+      "peak_percent": 77.58789271116257,
+      "final_raw_percent": 76.3671875,
+      "training_hours": 10.517625399874783,
+      "data_sha256": "60e67c4c6cf10d7f9f01395ebc85ad0de86cbec61d63ff44c214939accf0a77c"
+    },
+    "beam_step1_v1": {
+      "title": "Beam stage 1",
+      "final_percent": 89.09505426883698,
+      "peak_percent": 90.48177301883698,
+      "final_raw_percent": 88.41146230697632,
+      "training_hours": 5.4813323192934815,
+      "data_sha256": "3ed93d248121fe429d9cff087aaa30952fe711b68550270f1a084716f137822b"
+    },
+    "beam_step2_v1": {
+      "title": "Beam stage 2",
+      "final_percent": 69.39453274011612,
+      "peak_percent": 71.99869930744171,
+      "final_raw_percent": 67.70833730697632,
+      "training_hours": 5.347528443666589,
+      "data_sha256": "5b38c491d5cb13cb82eb92e426ce7765e1dfb667a5b97f09dc06d4cadaaaa0d4"
+    }
+  }
+}

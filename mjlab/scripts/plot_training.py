@@ -82,19 +82,19 @@ def main():
         np.array([row["recorded_process_seconds"] for row in rows]) / 3600,
     ]
     rewards = np.array([row["block_mean_reward"] for row in rows]).mean(axis=1)
-    goals = np.array([row["previous_insertion_all_goals_hit"] for row in rows])
+    goals = 100 * np.array([row["previous_insertion_all_goals_hit"] for row in rows])
     figure, axes = plt.subplots(2, 2, figsize=(11, 7), constrained_layout=True)
     for column, (x, label) in enumerate(
-        zip(xs, ["Transitions (millions)", "Recorded process time (hours)"])
+        zip(xs, ["Transitions (millions)", "Assembly Fine-tuning Time (hours)"])
     ):
         axes[0, column].plot(x, rewards, color="#216c62")
         axes[1, column].plot(x, goals, color="#216c62")
-        axes[1, column].set_ylim(0, 1)
+        axes[1, column].set_ylim(0, 100)
         for axis in axes[:, column]:
             axis.set_xlabel(label)
             axis.grid(alpha=0.2)
     axes[0, 0].set_ylabel("Mean rollout reward, six SAPG blocks")
-    axes[1, 0].set_ylabel("Training insertion: all goals hit")
+    axes[1, 0].set_ylabel("Success Rate (%) · training goals")
     figure.suptitle("MJLab training diagnostics — not held-out policy success")
     figure.savefig(args.output / "training_curves.png", dpi=180)
     figure.savefig(args.output / "training_curves.svg")

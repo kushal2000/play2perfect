@@ -16,10 +16,34 @@ these as reference experiments, not a guarantee of identical curves.
 
 ## Reference results
 
+![MJLab training success rates](media/success_overview.png)
+
+The y-axis is **Success Rate (%)**, from 0 to 100. Success means all assembly
+goals reached in the latest completed training episode per world. It does not
+require clean withdrawal or retention after release. The x-axis is
+**Assembly Fine-tuning Time (hours)**, using the recorded warm-time clock below.
+
+| Task | Final training success | Peak training success |
+|---|---:|---:|
+| Long-leg screwing | 89.7% | 91.8% |
+| Tight insertion | 76.4% | 77.6% |
+| Multipart stage 1 | 89.1% | 90.5% |
+| Multipart stage 2 | 69.4% | 72.0% |
+
+These are the final and peak values of the plotted trailing mean, not frozen-policy
+test scores. All four tasks are shown. Raw values and exact summaries are available
+in the [reference data](reference/manifest.json) and [plot summary](media/success_summary.json).
+
+<details>
+<summary>Reward curves</summary>
+
 ![MJLab reward curves](media/reward_overview.png)
+
+</details>
 
 Each line uses a trailing mean of up to 20 updates, reset at each session boundary.
 The included compressed CSV files retain every accepted scalar without smoothing.
+The dotted lines mark session restarts; brief dips include reset episode counters.
 Reward is the shaped reward per control step, averaged over six equal-size SAPG
 blocks. It is not episode return. Each task has its own reward scale.
 

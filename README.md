@@ -89,7 +89,7 @@ checkpoint details and evaluation results.
 | <img src="mjlab/docs/media/multipart.gif" width="220" alt="KUKA and Sharpa assemble two beam parts in MJLab"> | Two-stage beam assembly · [MP4](mjlab/docs/media/multipart.mp4) | 100.41M / 100.60M per stage; first part fixed at handoff |
 
 See [task demos and recipes](mjlab/README.md#task-demos),
-[reward curves](mjlab/docs/REPRODUCING.md), and
+[training curves](mjlab/docs/REPRODUCING.md), and
 [software validation](mjlab/validation/README.md).
 
 ## Installation

@@ -38,6 +38,9 @@ def main():
     overview, overview_axes = plt.subplots(
         2, 2, figsize=(10, 6), constrained_layout=True
     )
+    success, success_axes = plt.subplots(2, 2, figsize=(10, 6), constrained_layout=True)
+    mobile, mobile_axes = plt.subplots(4, 1, figsize=(6, 12), constrained_layout=True)
+    summary = {}
     for (recipe, info), overview_axis in zip(
         manifest["runs"].items(), overview_axes.flat, strict=True
     ):
@@ -51,7 +54,7 @@ def main():
         columns = {key: np.array([float(row[key]) for row in rows]) for key in rows[0]}
         restarts = columns["session_restart"].astype(bool)
         xs = [columns["transitions"] / 1e6, columns["warm_seconds"] / 3600]
-        ys = [columns["reward"], columns["training_all_goals_hit"]]
+        ys = [columns["reward"], 100 * columns["training_all_goals_hit"]]
         figure, axes = plt.subplots(2, 2, figsize=(10, 6), constrained_layout=True)
         for row, values in enumerate(ys):
             smoothed = trailing_mean(values, restarts)
@@ -60,15 +63,17 @@ def main():
                 axis.plot(x, values, color="#216c62", alpha=0.16, linewidth=0.5)
                 axis.plot(x, smoothed, color="#216c62", linewidth=1)
                 axis.set_xlabel(
-                    "Transitions (millions)" if column == 0 else "Warm training hours"
+                    "Transitions (millions)"
+                    if column == 0
+                    else "Assembly Fine-tuning Time (hours)"
                 )
                 axis.grid(alpha=0.2)
                 if row == 1:
-                    axis.set_ylim(0, 1)
+                    axis.set_ylim(0, 100)
             axes[row, 0].set_ylabel(
                 "Mean rollout reward"
                 if row == 0
-                else "Training insertion: all goals hit"
+                else "Success Rate (%) · training goals"
             )
         figure.suptitle(f"{info['title']} · seed 0 · {info['hardware']}")
         figure.savefig(args.output / f"{recipe}.png", dpi=150)
@@ -77,12 +82,63 @@ def main():
             xs[1], trailing_mean(ys[0], restarts), color="#216c62", linewidth=1
         )
         overview_axis.set_title(info["title"])
-        overview_axis.set_xlabel("Warm training hours")
+        overview_axis.set_xlabel("Assembly Fine-tuning Time (hours)")
         overview_axis.set_ylabel("Mean rollout reward")
         overview_axis.grid(alpha=0.2)
-    overview.suptitle("Direct play-foundation fine-tuning in MJLab · one training seed")
+        smoothed_success = trailing_mean(ys[1], restarts)
+        for success_axis in (
+            success_axes.flat[len(summary)],
+            mobile_axes[len(summary)],
+        ):
+            success_axis.plot(xs[1], smoothed_success, color="#216c62", linewidth=1.4)
+            success_axis.set(
+                title=info["title"].replace("Beam stage", "Multipart assembly · stage"),
+                xlabel="Assembly Fine-tuning Time (hours)",
+                ylabel="Success Rate (%)",
+                ylim=(0, 100),
+                xlim=(0, None),
+                yticks=[0, 20, 40, 60, 80, 100],
+            )
+            for index, boundary in enumerate(xs[1][restarts]):
+                success_axis.axvline(
+                    boundary,
+                    color="#888888",
+                    linewidth=0.8,
+                    linestyle=":",
+                    label="Session restart" if index == 0 else None,
+                )
+            if restarts.any():
+                success_axis.legend(loc="lower right", fontsize=8)
+            success_axis.grid(alpha=0.2)
+        summary[recipe] = {
+            "title": info["title"],
+            "final_percent": float(smoothed_success[-1]),
+            "peak_percent": float(smoothed_success.max()),
+            "final_raw_percent": float(ys[1][-1]),
+            "training_hours": float(xs[1][-1]),
+            "data_sha256": info["sha256"],
+        }
+    overview.suptitle("MJLab assembly fine-tuning from the pre-trained play policy")
     overview.savefig(args.output / "reward_overview.png", dpi=150)
     plt.close(overview)
+    success.suptitle("MJLab · training goal completion · one seed per task")
+    success.savefig(args.output / "success_overview.png", dpi=150)
+    plt.close(success)
+    mobile.suptitle("MJLab · training goal completion\nOne seed per task")
+    mobile.savefig(args.output / "success_overview_mobile.png", dpi=150)
+    plt.close(mobile)
+    (args.output / "success_summary.json").write_text(
+        json.dumps(
+            {
+                "metric": "Training all-goal completion, not clean-release evaluation",
+                "smoothing": "Trailing mean of up to 20 updates; reset per session",
+                "time": manifest["time_definition"],
+                "runs": summary,
+            },
+            indent=2,
+        )
+        + "\n"
+    )
     print(args.output)
 
 

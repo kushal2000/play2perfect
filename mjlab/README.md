@@ -23,10 +23,15 @@ rollouts, rendered in MuJoCo at 1× simulation time from recorded states.
 | <img src="docs/media/multipart.gif" width="260" alt="Two-part beam assembly, with the first part fixed at handoff"> | Multipart<br>`beam_step1_v1` + `beam_step2_v1` · [MP4](docs/media/multipart.mp4) | 100.41M / 100.60M steps per stage; one composed sequence |
 
 Multipart fixes the first part after handoff; stage scores are reported separately.
-See [reproduction instructions and reward curves](docs/REPRODUCING.md) for the
+See [reproduction instructions and training curves](docs/REPRODUCING.md) for the
 checkpoint budgets, evaluation protocols and release-stability results.
 
-![MJLab fine-tuning rewards from the pre-trained play policy](docs/media/reward_overview.png)
+![MJLab training success rates from the pre-trained play policy](docs/media/success_overview.png)
+
+Success here means all assembly goals reached during training. The curves use a
+20-update trailing mean and a 0–100% scale. Clean withdrawal is measured separately
+in the table above. [Reward curves and metric definitions](docs/REPRODUCING.md#reference-results)
+remain available.
 
 ## Install and prepare
 
