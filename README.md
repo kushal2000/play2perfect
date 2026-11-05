@@ -77,19 +77,18 @@ objects, finetuned from the same Stage-1 play policy with the same environment a
 
 ## MJLab assembly demos
 
-These policies start from the original SimToolReal play foundation, then fine-tune
-in MJLab. They do not inherit task-specific Isaac Lab assembly policies.
-Videos replay recorded MJLab states through native MuJoCo at 1× simulation time.
-They are selected successful rollouts; cohort scores and limitations are in the
-[reproduction guide](mjlab/docs/REPRODUCING.md).
+Fine-tune the pre-trained play policy for assembly in MJLab. These demos show
+selected successful rollouts, rendered in MuJoCo at 1× simulation time.
+See the [reproduction guide](mjlab/docs/REPRODUCING.md) for training commands,
+checkpoint details and evaluation results.
 
 | Demo | Task | MJLab fine-tuning shown |
 |:----:|---|---|
-| <img src="mjlab/docs/media/screwing.gif" width="220" alt="KUKA and Sharpa screw a long furniture leg in MJLab"> | Long-leg screwing | 1,000.02M transitions |
-| <img src="mjlab/docs/media/tight_insertion.gif" width="220" alt="KUKA and Sharpa insert an L-shaped peg in MJLab"> | Tight insertion | 1,002.33M transitions |
-| <img src="mjlab/docs/media/multipart.gif" width="220" alt="KUKA and Sharpa assemble two beam parts in MJLab"> | Two-stage beam assembly | 100.41M / 100.60M per stage; first part fixed at handoff |
+| <img src="mjlab/docs/media/screwing.gif" width="220" alt="KUKA and Sharpa screw a long furniture leg in MJLab"> | Long-leg screwing · [MP4](mjlab/docs/media/screwing.mp4) | 1,000.02M transitions |
+| <img src="mjlab/docs/media/tight_insertion.gif" width="220" alt="KUKA and Sharpa insert an L-shaped peg in MJLab"> | Tight insertion · [MP4](mjlab/docs/media/tight_insertion.mp4) | 1,002.33M transitions |
+| <img src="mjlab/docs/media/multipart.gif" width="220" alt="KUKA and Sharpa assemble two beam parts in MJLab"> | Two-stage beam assembly · [MP4](mjlab/docs/media/multipart.mp4) | 100.41M / 100.60M per stage; first part fixed at handoff |
 
-See [full videos and task recipes](mjlab/README.md#task-demos),
+See [task demos and recipes](mjlab/README.md#task-demos),
 [reward curves](mjlab/docs/REPRODUCING.md), and
 [software validation](mjlab/validation/README.md).
 

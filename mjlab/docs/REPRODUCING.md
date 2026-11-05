@@ -1,11 +1,11 @@
 # Reproduce MJLab assembly fine-tuning
 
-All four recipes start independently from the original SimToolReal play
-foundation, distributed as Play2Perfect's `play/model.pth`. Its SHA-256 is
+All four recipes start independently from the pre-trained play policy,
+distributed as Play2Perfect's `play/model.pth`. Its SHA-256 is
 `4cb0d09833326de6878ee5681c2b14521823fa616e01b135214a51ffe41c63b9`.
-The foundation was trained in Isaac Gym. These runs do **not** start from an
-Isaac Lab fine-tuned Play2Perfect assembly policy. Actor and critic optimizers
-start fresh; the pretrained network and exploration parameters are inherited.
+The play policy was trained in Isaac Gym. Actor and critic optimizers start
+fresh for MJLab assembly fine-tuning; the pre-trained network and exploration
+parameters are inherited.
 
 The plots below come from the research implementation before package extraction.
 The extracted package passes CPU/CUDA update and resume checks. Its full
@@ -113,7 +113,7 @@ Select the history protocol explicitly:
 
 | Policy / reference | `--history` | Queue lengths: object / observation / action |
 |---|---|---|
-| Direct-foundation long-leg reference | `source` | 10 / 3 / 3 |
+| Long-leg reference | `source` | 10 / 3 / 3 |
 | Tight and separate beam reference evaluations | `immediate` | 1 / 1 / 1 |
 | Browser-style immediate-feedback diagnostic | `immediate` | 1 / 1 / 1 |
 
@@ -142,12 +142,11 @@ curve. To run that same recipe to the video's budget, change its command to
 including three early failures. Its two-second passive release test, initialized
 with recorded solver warmstart, retains 54/96 goals during forced finger opening;
 46/96 also remain contact-free throughout. These separate diagnostics do not
-change the endpoint score. See the [video and result page](https://mjlab-dexterous-showcase-tyler-20261102.tylergwlum.chatgpt.site/presentation.html#long-leg-foundation1b).
+change the endpoint score. See the [full endpoint validation](../validation/2026-11-05/long_reference.json).
 
 Multipart uses two separately trained policies. At handoff, it resets recurrent
 memory and fixes the first assembled part. The prepared stage and composed models
-use the same measured masses: 68.57 g and 85.98 g. An older research-page label
-claiming a 3×/1× mass difference was incorrect. The fused seated fixture has a
+use the same measured masses: 68.57 g and 85.98 g. The fused seated fixture has a
 measured collider difference, declared by the required evaluation flag. A composed
 video is not a randomized joint success rate.
 
@@ -155,10 +154,11 @@ Record at `--record-every 1` to keep every 60 Hz control state. The native MuJoC
 renderer replays those MJLab states without integration, interpolation or motion
 smoothing. Use the reference view at azimuth 145°, elevation −22°, distance 1.85 m,
 look-at `(0, 0.3, 0.44)`. The wider front multipart camera uses azimuth 180°,
-elevation −10°, distance 1.65 m, look-at `(0, 0.1, 0.58)`. See the video links in the
-[task table](../README.md#task-demos).
+elevation −10°, distance 1.65 m, look-at `(0, 0.1, 0.58)`. The [task table](../README.md#task-demos)
+includes animated previews and full MP4 files. Use the
+[rendering commands](../README.md#render-and-plot) to render recorded rollouts.
 
-The public foundation downloads automatically. The research fine-tuned demo
+The pre-trained play policy downloads automatically. The research fine-tuned demo
 checkpoints are not yet distributed in this minimal package. You can train and
 render your own checkpoints; exact replay of the supplied demo actors requires
 those additional artifacts. [Media provenance](media/manifest.json) identifies

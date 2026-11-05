@@ -1,39 +1,32 @@
 # Play2Perfect assembly fine-tuning in MJLab
 
-An MJLab backend for KUKA iiwa 14 + Sharpa: long-leg screwing,
-tight insertion and two-stage beam assembly. Train from the original SimToolReal
-play foundation with the existing six-block recurrent SAPG learner.
+Fine-tune the pre-trained play policy for long-leg screwing, tight insertion
+and two-stage beam assembly in MJLab, using KUKA iiwa 14 + Sharpa.
 
-**Four validated training recipes.** All four recipes complete
-real updates and exact learner restoration in isolated CPU and CUDA environments.
-Public downloads, scene reconstruction, evaluation, dense recording, rendering
-and plotting also pass. GitHub CI installs the package and builds its wheel.
-See [validation records](validation/README.md) for the tested scope and limits.
-These short checks do not establish full training-curve reproduction.
+The package includes four training recipes, checkpoint resume, policy evaluation,
+MuJoCo rendering and training plots. CPU/CUDA learner checks and clean-install CI
+are documented in the [validation records](validation/README.md).
 
-The Isaac Lab backend remains in the parent repository. Upstream Flexiv/Wuji
-support applies to Isaac Lab; this MJLab package currently supports KUKA/Sharpa.
-See [scope and limitations](#scope-and-limitations) for the supported setup.
+Play2Perfect supports assembly fine-tuning in both Isaac Lab and MJLab.
+This backend supports KUKA/Sharpa; Flexiv/Wuji support is available in Isaac Lab.
 
 ## Task demos
 
-All three demos show MJLab fine-tuning from the **original SimToolReal play
-foundation (Isaac Gym)**. They do not inherit task-specific Play2Perfect assembly
-policies. The physical KUKA arm is simulated. Native MuJoCo renders recorded
-states at 1× simulation time, without motion interpolation.
+All three policies are fine-tuned in MJLab from the **pre-trained play policy**.
+The full KUKA arm and Sharpa hand are simulated. The GIFs show selected successful
+rollouts, rendered in MuJoCo at 1× simulation time from recorded states.
 
-| Demo | Task and recipe | Video / measured result |
+| Demo | Task and recipe | MJLab training / measured result |
 |:---:|---|---|
-| <img src="docs/media/screwing.gif" width="260" alt="Long-leg screwing with the full KUKA arm visible"> | Long-leg screwing<br>`long_leg_fine_v1` | [Video](https://mjlab-dexterous-showcase-tyler-20261102.tylergwlum.chatgpt.site/assets/mujoco-long-leg-foundation1b-reference.mp4) · [Front view](https://mjlab-dexterous-showcase-tyler-20261102.tylergwlum.chatgpt.site/assets/mujoco-long-leg-foundation1b-front.mp4)<br>1,000.02M steps; 96/128 clean withdrawal, source history |
-| <img src="docs/media/tight_insertion.gif" width="260" alt="Tight L-peg insertion in native MuJoCo rendering"> | Tight insertion<br>`tight_stabilized_v1` | [Video](https://mjlab-dexterous-showcase-tyler-20261102.tylergwlum.chatgpt.site/assets/mujoco-tight-insertion-reference.mp4)<br>1,002.33M steps; 16/32 clean endpoints, immediate feedback |
-| <img src="docs/media/multipart.gif" width="260" alt="Two-part beam assembly, with the first part fixed at handoff"> | Multipart<br>`beam_step1_v1` + `beam_step2_v1` | [Front view](https://mjlab-dexterous-showcase-tyler-20261102.tylergwlum.chatgpt.site/assets/mujoco-multipart-front-wide.mp4) · [Reference view](https://mjlab-dexterous-showcase-tyler-20261102.tylergwlum.chatgpt.site/assets/mujoco-multipart-reference.mp4)<br>100.41M / 100.60M steps; one composed sequence |
+| <img src="docs/media/screwing.gif" width="260" alt="Long-leg screwing with the full KUKA arm visible"> | Long-leg screwing<br>`long_leg_fine_v1` · [MP4](docs/media/screwing.mp4) | 1,000.02M steps; 96/128 clean endpoints, source history |
+| <img src="docs/media/tight_insertion.gif" width="260" alt="Tight L-peg insertion in native MuJoCo rendering"> | Tight insertion<br>`tight_stabilized_v1` · [MP4](docs/media/tight_insertion.mp4) | 1,002.33M steps; 16/32 clean endpoints, immediate feedback |
+| <img src="docs/media/multipart.gif" width="260" alt="Two-part beam assembly, with the first part fixed at handoff"> | Multipart<br>`beam_step1_v1` + `beam_step2_v1` · [MP4](docs/media/multipart.mp4) | 100.41M / 100.60M steps per stage; one composed sequence |
 
-These are selected successes. Multipart fixes the first part after handoff;
-separate-stage scores do not establish joint success. The demo checkpoints and
-curve endpoints can differ. See [reproduction instructions, reward curves,
-evaluation protocols and limitations](docs/REPRODUCING.md).
+Multipart fixes the first part after handoff; stage scores are reported separately.
+See [reproduction instructions and reward curves](docs/REPRODUCING.md) for the
+checkpoint budgets, evaluation protocols and release-stability results.
 
-![Reward during direct-foundation MJLab fine-tuning](docs/media/reward_overview.png)
+![MJLab fine-tuning rewards from the pre-trained play policy](docs/media/reward_overview.png)
 
 ## Install and prepare
 
@@ -51,8 +44,9 @@ uv run --no-sync --project environments/sapg-sdf-candidate-cpu \
   python scripts/prepare_warp_stabilization.py
 ```
 
-Assets use immutable public revisions and SHA-256 checks. The foundation download
-is about 414 MB. Existing changed inputs are rejected rather than overwritten.
+Assets use immutable public revisions and SHA-256 checks. The pre-trained
+checkpoint download is about 414 MB. Existing changed inputs are rejected
+rather than overwritten.
 See [sources and notices](third_party/README.md).
 
 The pinned stack uses MJLab `8bb2bc9e`, MuJoCo 3.12, Warp 1.18 and the mesh-SDF
@@ -107,7 +101,7 @@ divide `num_envs × horizon` and contain whole recurrent sequences. Explicit
 overrides produce a different experiment and enter the saved configuration.
 
 Checkpoints and `metrics.jsonl` appear in the run directory. `config.json`
-records foundation ancestry, source identity, learner/task contracts and runtime
+records checkpoint ancestry, source identity, learner/task contracts and runtime
 versions. `actual_options.json` records compiled physics settings. Capacity
 overflow rejects the rollout; nonfinite states are captured and counted.
 
@@ -153,7 +147,7 @@ and contact-free withdrawal are different metrics. A contact-free endpoint does
 not establish later retention or real-robot transfer.
 
 `--history source` uses the training queue lengths (10/3/3 for object state,
-observation and action). It matches the direct-foundation long-leg reference.
+observation and action). It matches the long-leg reference evaluation.
 The default `--history immediate` uses 1/1/1 and preserves earlier offline
 evaluation behavior. Native MuJoCo evaluation supports immediate feedback only.
 Both retain the public offline reset/scoring rules; the queue profile is recorded.
@@ -227,10 +221,7 @@ training commands, exact budgets, hardware, raw curve data and video provenance.
 - Physics fidelity and performance vary by task. Smaller physics steps are not
   uniformly better. This package preserves tested settings rather than claiming
   simulator-identical trajectories.
-- The first release excludes full SimToolReal pretraining, tool-use tasks,
+- The first release excludes play pretraining, tool-use tasks,
   cluster scripts and experiment dashboards.
 - Example videos are selected rollouts. Inspect cohort results and contact
   diagnostics before judging reliability or sim-to-real readiness.
-
-Play2Perfect assembly fine-tuning supports Isaac Lab and MJLab. The current
-MJLab robot is KUKA/Sharpa; Flexiv/Wuji support remains in Isaac Lab.

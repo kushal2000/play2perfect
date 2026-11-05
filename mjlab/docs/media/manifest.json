@@ -34,10 +34,10 @@
       "selected_world": 127,
       "gif": "screwing.gif",
       "gif_sha256": "3009d46481aec9bdc2f7875552245947a2d4e43c4e58a9dcb2a2b67e8510d0b1",
-      "video_url": "https://mjlab-dexterous-showcase-tyler-20261102.tylergwlum.chatgpt.site/assets/mujoco-long-leg-foundation1b-reference.mp4",
       "training_transitions": 1000022016,
       "cohort_clean_withdrawals": 96,
-      "cohort_starts": 128
+      "cohort_starts": 128,
+      "video_file": "screwing.mp4"
     },
     "tight_insertion": {
       "inputs": {
@@ -71,7 +71,7 @@
       "selected_world": 0,
       "gif": "tight_insertion.gif",
       "gif_sha256": "05f9a010d5061ebb18e551fbcee0e32cbb49bf55c76bb23c1a41df1d9ae4648d",
-      "video_url": "https://mjlab-dexterous-showcase-tyler-20261102.tylergwlum.chatgpt.site/assets/mujoco-tight-insertion-reference.mp4"
+      "video_file": "tight_insertion.mp4"
     },
     "multipart": {
       "inputs": {
@@ -108,7 +108,7 @@
       "selected_world": 0,
       "gif": "multipart.gif",
       "gif_sha256": "fe60a6c1a80acc02950d4b788584c7d7154d3ad5a68ea4a0fe9869ac5939ffc0",
-      "video_url": "https://mjlab-dexterous-showcase-tyler-20261102.tylergwlum.chatgpt.site/assets/mujoco-multipart-front-wide.mp4"
+      "video_file": "multipart.mp4"
     }
   }
 }

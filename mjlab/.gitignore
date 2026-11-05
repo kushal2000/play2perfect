@@ -9,3 +9,8 @@ __pycache__/
 /build/
 /dist/
 /MUJOCO_LOG.TXT
+
+# Small, published demos; generated rollout videos remain ignored.
+!/docs/media/screwing.mp4
+!/docs/media/tight_insertion.mp4
+!/docs/media/multipart.mp4
