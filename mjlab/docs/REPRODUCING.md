@@ -8,7 +8,9 @@ Isaac Lab fine-tuned Play2Perfect assembly policy. Actor and critic optimizers
 start fresh; the pretrained network and exploration parameters are inherited.
 
 The plots below come from the research implementation before package extraction.
-The extracted package passes short CPU/CUDA update and resume checks. A fresh
+The extracted package passes CPU/CUDA update and resume checks. Its full
+128-start frozen Long evaluation also reproduces all archived research states
+and 96 clean endpoints; see the [validation record](../validation/2026-11-05/long_reference.json). A fresh
 full-scale reproduction from this public package has not yet completed. Treat
 these as reference experiments, not a guarantee of identical curves.
 

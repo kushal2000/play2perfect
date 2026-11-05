@@ -1,5 +1,12 @@
 # Minimal release validation
 
+The [full Long evaluation](2026-11-05/long_reference.json) also passes at public
+commit `513541a`: **96/128 clean endpoints**, 115 all-goal sequences, and no
+unfinished starts. All 152 archived batch states match the research reference
+exactly across 17 fields. The repeat exits successfully and reproduces the dense
+recording byte-for-byte. This tests the final MJLab actor in the extracted
+package; full-scale training from that package remains to be rerun.
+
 The [November 5 review](2026-11-05/review.json) rechecks all 32 tests, formatting,
 the wheel, documentation links and public video hashes. It updates the Long demo
 to 1B steps and removes historical planning material. Runtime code, dependency
