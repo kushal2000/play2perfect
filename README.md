@@ -26,8 +26,6 @@ This repository provides:
   insertions, using our released checkpoints, with a robot switch in the GUI.
 - A **minimal sim-to-real deployment** reference.
 
-> This release targets **Isaac Sim only**.
-
 ## Project structure
 
 ```
